@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(uuid())
+
+  email String @unique
+
+  passwordHash String @map("password_hash")
+
+  firstName String @map("first_name")
+
+  lastName String @map("last_name")
+
+  phoneNumber String? @map("phone_number")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  role RoleEnum @default(GUEST)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tokens Token[] @relation("user_tokens")
+
+  sessions Session[] @relation("user_sessions")
+
+  @@map("users")
+}
+
+model Token {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash") // or token hash ??? - hash
+  type      TokenType
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation("user_tokens", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tokens")
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastActive DateTime @default(now()) @map("last_active")
+
+  user User @relation("user_sessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+enum RoleEnum {
+  ADMIN
+  USER
+  GUEST
+}
+
+enum TokenType {
+  REFRESH
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
