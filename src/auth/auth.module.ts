@@ -6,12 +6,12 @@ import {JwtModule} from "@nestjs/jwt";
 import {ConfigModule, ConfigService} from "@nestjs/config";
 import {PassportModule} from "@nestjs/passport";
 import {getJwtConfig} from "./config";
-import {JwtStrategy} from "./strategies";
+import {GoogleStrategy, JwtStrategy} from "./strategies";
 import {MailModule} from "../mail/mail.module";
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService,JwtStrategy],
+  providers: [AuthService,JwtStrategy,GoogleStrategy],
   imports:[PrismaModule,MailModule,JwtModule.registerAsync({
     imports: [ConfigModule],
     useFactory: getJwtConfig,

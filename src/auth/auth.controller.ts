@@ -1,11 +1,12 @@
-import {Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res} from '@nestjs/common';
+import {Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards} from '@nestjs/common';
 import {AuthService} from './auth.service';
 import type {Response, Request} from 'express';
 import {LoginRequest, RegisterRequest} from "./dto";
-import {Authorized} from "./decorators/authorized.decorator";
-import {Authorization} from "./decorators/authorization.decorator";
+import {Authorized} from "./decorators";
+import {Authorization} from "./decorators";
 import {ForgotPasswordRequest} from "./dto/forgot-password.dto";
 import {ResetPasswordRequest} from "./dto/reset-password.dto";
+import {AuthGuard} from "@nestjs/passport";
 
 @Controller('auth')
 export class AuthController {
@@ -55,6 +56,21 @@ export class AuthController {
     async resetPassword(@Query('token') token: string, @Body() dto: ResetPasswordRequest) {
         return this.authService.resetPassword(token, dto);
     }
+
+    @Get('google')
+    @UseGuards(AuthGuard('google'))
+    @HttpCode(HttpStatus.OK)
+    async googleAuth(){
+
+    }
+
+    @Get('google/callback')
+    @UseGuards(AuthGuard('google'))
+    @HttpCode(HttpStatus.OK)
+    async googleAuthCallback(@Req() req){
+        return req.user;
+    }
+
 
 }
 
