@@ -1,5 +1,7 @@
 import {Controller, Delete, Get, Param, Post} from '@nestjs/common';
 import { ScraperService } from './scraper.service';
+import {Authorization} from "../auth/decorators";
+import {RoleEnum} from "../auth/enums";
 
 @Controller('scraper')
 export class ScraperController {
@@ -50,7 +52,9 @@ export class ScraperController {
   }
 
 
+
   @Get('atb/products')
+  @Authorization(RoleEnum.ADMIN)
   async getAllAtbProducts() {
     return this.scraperService.getAllAtbProducts();
   }
