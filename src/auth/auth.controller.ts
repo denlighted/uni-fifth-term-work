@@ -1,4 +1,4 @@
-import {Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards} from '@nestjs/common';
+import {Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, Query, Req, Res, UseGuards} from '@nestjs/common';
 import {AuthService} from './auth.service';
 import type {Response, Request} from 'express';
 import {LoginRequest, RegisterRequest} from "./dto";
@@ -7,6 +7,9 @@ import {Authorization} from "./decorators";
 import {ForgotPasswordRequest} from "./dto/forgot-password.dto";
 import {ResetPasswordRequest} from "./dto/reset-password.dto";
 import {AuthGuard} from "@nestjs/passport";
+import {GooglePayload} from "./interfaces/google-oatuh.interface.jwt";
+import {RoleEnum} from "./enums";
+import {UpdateRoleRequest} from "./dto/change-role.dto";
 
 @Controller('auth')
 export class AuthController {
@@ -57,6 +60,13 @@ export class AuthController {
         return this.authService.resetPassword(token, dto);
     }
 
+    @Patch('upgrade-role')
+    @HttpCode(HttpStatus.OK)
+    @Authorization(RoleEnum.ADMIN)
+    async makeAdmin(@Body() dto: UpdateRoleRequest) {
+        return this.authService.getPrivilage(dto);
+    }
+
     @Get('google')
     @UseGuards(AuthGuard('google'))
     @HttpCode(HttpStatus.OK)
@@ -67,10 +77,9 @@ export class AuthController {
     @Get('google/callback')
     @UseGuards(AuthGuard('google'))
     @HttpCode(HttpStatus.OK)
-    async googleAuthCallback(@Req() req){
-        return req.user;
+    async googleAuthCallback(@Req() req:Request, @Res({passthrough:true}) res:Response){
+        return this.authService.googleAuth(res, req.user as GooglePayload);
     }
-
 
 }
 

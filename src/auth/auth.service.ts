@@ -16,6 +16,8 @@ import {ForgotPasswordRequest} from "./dto/forgot-password.dto";
 import * as crypto from "node:crypto";
 import * as bcrypt from 'bcrypt'
 import {ResetPasswordRequest} from "./dto/reset-password.dto";
+import {GooglePayload} from "./interfaces/google-oatuh.interface.jwt";
+import {UpdateRoleRequest} from "./dto/change-role.dto";
 
 
 @Injectable()
@@ -60,6 +62,43 @@ export class AuthService {
 
         return this.auth(res, user.id, email, role);
     }
+
+
+    async googleAuth(res: Response, profile: GooglePayload) {
+        const {provider, providerId, email, givenName, familyName, picture} = profile;
+
+        let user = await this.prismaService.user.findFirst({where: {provider, providerId}});
+
+        if (!user && email) {
+            user = await this.prismaService.user.findUnique({where: {email}});
+
+            if (user) {
+                user = await this.prismaService.user.update({
+                    where: {id: user.id},
+                    data: {provider, providerId, pictureUrl: picture},
+                });
+            }
+        }
+
+        if (!user) {
+            user = await this.prismaService.user.create({
+                data: {
+                    email,
+                    firstName: givenName,
+                    lastName: familyName,
+                    passwordHash: '',
+                    role: RoleEnum.USER,
+                    provider,
+                    providerId,
+                    pictureUrl: picture,
+                },
+            });
+        }
+
+        return this.auth(res, user.id, user.email, user.role as RoleEnum);
+
+    }
+
 
     async login(res: Response, dto: LoginRequest) {
         const {email, password} = dto;
@@ -233,4 +272,22 @@ export class AuthService {
 
         return {message: 'Password successfully updated'};
     }
+
+    async getPrivilage(dto:UpdateRoleRequest) {
+        const { id, email } = dto;
+
+        const user =
+            (email && (await this.prismaService.user.findUnique({ where: { email } }))) ||
+            (id && (await this.prismaService.user.findUnique({ where: { id } })));
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        return this.prismaService.user.update({
+            where: { id: user.id },
+            data: { role: RoleEnum.ADMIN },
+        });
+    }
 }
+
