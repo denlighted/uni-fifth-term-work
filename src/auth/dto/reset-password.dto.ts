@@ -1,5 +1,5 @@
 import {IsNotEmpty, IsString, Length} from "class-validator";
-import {PasswordMatches} from "../decorators/password-matches.decorator";
+import {PasswordMatches} from "../decorators";
 
 export class ResetPasswordRequest{
 

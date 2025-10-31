@@ -1,23 +1,29 @@
-import {ConflictException, Injectable, NotFoundException, UnauthorizedException} from '@nestjs/common';
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    NotFoundException,
+    UnauthorizedException
+} from '@nestjs/common';
 import {PrismaService} from "../prisma/prisma.service";
 import {ConfigService} from "@nestjs/config";
 import {JwtService} from "@nestjs/jwt";
-import {LoginRequest, RegisterRequest} from "./dto";
+import type{ChangePasswordRequest, LoginRequest, RegisterRequest} from "./dto";
 import {hash, verify} from "argon2";
-import {isDev} from "../../utils/is-dev.utils";
+import {isDev} from "../../utils";
 import type {Response, Request} from 'express'
 import {RoleEnum, TokenType} from "./enums";
 import ms from "ms";
 import type {StringValue} from 'ms';
-import {JwtPayload} from "./interfaces";
-import {AppService} from "../app.service";
+import type{JwtPayload} from "./interfaces";
 import {MailService} from "../mail/mail.service";
-import {ForgotPasswordRequest} from "./dto/forgot-password.dto";
+import type{ForgotPasswordRequest} from "./dto";
 import * as crypto from "node:crypto";
-import * as bcrypt from 'bcrypt'
-import {ResetPasswordRequest} from "./dto/reset-password.dto";
+import {ResetPasswordRequest} from "./dto";
 import {GooglePayload} from "./interfaces/google-oatuh.interface.jwt";
-import {UpdateRoleRequest} from "./dto/change-role.dto";
+import type{UpdateRoleRequest} from "./dto";
+import {User} from "@prisma/client";
+import {UpdateProfileRequest} from "./dto/update-user.dto";
 
 
 @Injectable()
@@ -219,7 +225,7 @@ export class AuthService {
     async forgotPassword(req: Request, dto: ForgotPasswordRequest) {
         const {email} = dto;
 
-        const user = await this.prismaService.user.findUnique({where: {email}});
+        const user = await this.prismaService.user.findUnique({where: {email,isActive: true}});
         if (!user) {
             return {message: 'If this email exists, a password reset link has been sent.'};
         }
@@ -271,6 +277,63 @@ export class AuthService {
         await this.prismaService.token.delete({where: {id: token.id}});
 
         return {message: 'Password successfully updated'};
+    }
+
+    async changePassword(req:Request,dto:ChangePasswordRequest){
+        const{password, oldPassword} = dto;
+
+        const currentUser = req.user as User;
+
+        const user = await this.prismaService.user.findUnique({
+            where: { id: currentUser.id,isActive: true },
+        });
+
+        if(!user){
+            throw new NotFoundException("User has not been found")
+        }
+
+        const isValidPassword = await verify(user.passwordHash,oldPassword, );
+
+        if (!isValidPassword) {
+            throw new UnauthorizedException('Old password is incorrect');
+        }
+
+        if (await verify(user.passwordHash,password)) {
+            throw new BadRequestException('New password cannot be the same as the old password');
+        }
+
+        await this.prismaService.user.update({
+            where:{id:currentUser.id},
+            data:{passwordHash:await hash(password)}})
+
+        return { success: true, message: 'Password changed successfully' };
+    }
+
+    async changeProfile(req:Request,dto:UpdateProfileRequest) {
+        const currentUser = req.user as User;
+
+        const user = await this.prismaService.user.findUnique({where:{id:currentUser.id,isActive: true},})
+        if(!user){
+            throw new NotFoundException("User has not been found")
+        }
+
+        const data = Object.fromEntries(Object.entries(dto).filter(([_,value])=>value!=undefined));
+
+        await this.prismaService.user.update({where:{id:currentUser.id},data});
+
+        return { success: true, message: 'Updated successfully' };
+
+    }
+
+    async deleteUser(req:Request){
+        const currentUser = req.user as User;
+
+        await this.prismaService.user.update({where:{id:currentUser.id},data:{isActive:false}});
+
+        await this.prismaService.token.deleteMany({where: { userId: currentUser.id }});
+
+        return { success: true, message: 'Profile has been successfully deleted'};
+
     }
 
     async getPrivilage(dto:UpdateRoleRequest) {

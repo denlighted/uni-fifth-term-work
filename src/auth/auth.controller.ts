@@ -1,15 +1,15 @@
 import {Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, Query, Req, Res, UseGuards} from '@nestjs/common';
 import {AuthService} from './auth.service';
 import type {Response, Request} from 'express';
-import {LoginRequest, RegisterRequest} from "./dto";
+import {ChangePasswordRequest, LoginRequest, RegisterRequest, UpdateProfileRequest} from "./dto";
 import {Authorized} from "./decorators";
 import {Authorization} from "./decorators";
-import {ForgotPasswordRequest} from "./dto/forgot-password.dto";
-import {ResetPasswordRequest} from "./dto/reset-password.dto";
+import type {ForgotPasswordRequest} from "./dto";
+import type{ResetPasswordRequest} from "./dto";
 import {AuthGuard} from "@nestjs/passport";
 import {GooglePayload} from "./interfaces/google-oatuh.interface.jwt";
 import {RoleEnum} from "./enums";
-import {UpdateRoleRequest} from "./dto/change-role.dto";
+import  type {UpdateRoleRequest} from "./dto";
 
 @Controller('auth')
 export class AuthController {
@@ -54,7 +54,7 @@ export class AuthController {
         return this.authService.forgotPassword(req, dto)
     }
 
-    @Post('reset-password')
+    @Patch('reset-password')
     @HttpCode(HttpStatus.OK)
     async resetPassword(@Query('token') token: string, @Body() dto: ResetPasswordRequest) {
         return this.authService.resetPassword(token, dto);
@@ -65,6 +65,20 @@ export class AuthController {
     @Authorization(RoleEnum.ADMIN)
     async makeAdmin(@Body() dto: UpdateRoleRequest) {
         return this.authService.getPrivilage(dto);
+    }
+
+    @Patch('change-password')
+    @HttpCode(HttpStatus.OK)
+    @Authorization()
+    async changePassword(@Req() req:Request,@Body() dto: ChangePasswordRequest) {
+        return this.authService.changePassword(req,dto);
+    }
+
+    @Patch("change-profile")
+    @HttpCode(HttpStatus.OK)
+    @Authorization()
+    async changeProfile(@Req() req:Request, @Body()dto: UpdateProfileRequest) {
+        return this.authService.changeProfile(req,dto);
     }
 
     @Get('google')
