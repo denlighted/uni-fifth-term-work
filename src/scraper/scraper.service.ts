@@ -30,7 +30,7 @@ export class ScraperService {
 
 
     async deleteForaProd(){
-        await this.product.deleteMany({store:"ATB"});
+        await this.product.deleteMany({store:"Fora"});
         return true;
     }
 
@@ -60,6 +60,8 @@ export class ScraperService {
         console.log("All categories have been recorded");
     }
 
+
+
     async writeAllForaProducts() {
         const { data } = await this.getAllForaCategories();
         const limit = pLimit(3);
@@ -83,6 +85,7 @@ export class ScraperService {
 
         await Promise.all(tasks);
         console.log("All categories have been recorded");
+        return true;
     }
 
 

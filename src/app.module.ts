@@ -6,6 +6,7 @@ import {ConfigModule} from "@nestjs/config";
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { MailModule } from './mail/mail.module';
+import { ProductsModule } from './products/products.module';
 
 
 @Module({
@@ -17,6 +18,7 @@ import { MailModule } from './mail/mail.module';
     AuthModule,
     PrismaModule,
     MailModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -25,6 +25,8 @@ export class ScraperController {
   //
 
 
+
+
   @Delete('categories')
   async cleanCategCollection(){
     return this.scraperService.cleanCategCollection();

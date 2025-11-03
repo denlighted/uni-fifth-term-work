@@ -23,7 +23,7 @@ import {ResetPasswordRequest} from "./dto";
 import {GooglePayload} from "./interfaces/google-oatuh.interface.jwt";
 import type{UpdateRoleRequest} from "./dto";
 import {User} from "@prisma/client";
-import {UpdateProfileRequest} from "./dto/update-user.dto";
+import type{UpdateProfileRequest} from "./dto";
 
 
 @Injectable()
@@ -36,7 +36,7 @@ export class AuthService {
 
     constructor(private readonly prismaService: PrismaService,
                 private readonly configService: ConfigService,
-                private jwtService: JwtService,
+                private readonly jwtService: JwtService,
                 private readonly mailService: MailService,
     ) {
         this.JWT_ACCESS_TOKEN_TTL = configService.getOrThrow<string>('JWT_ACCESS_TOKEN_TTL');
@@ -138,6 +138,13 @@ export class AuthService {
         }
         const payLoad: JwtPayload = await this.jwtService.verifyAsync(refreshToken);
 
+        const tokenRecord = await this.prismaService.token.findFirst({
+            where: { type: TokenType.REFRESH, userId: payLoad.sub },
+        });
+        if (!tokenRecord || !(await verify(tokenRecord.tokenHash, refreshToken))) {
+            throw new UnauthorizedException('Invalid refresh token');
+        }
+
         if (payLoad) {
             const user = await this.prismaService.user.findUnique({
                 where: {id: payLoad.id},
@@ -158,7 +165,7 @@ export class AuthService {
 
 
     async validate(id: string) {
-        const user = this.prismaService.user.findUnique({where: {id}});
+        const user = await this.prismaService.user.findUnique({where: {id}});
         if (!user) {
             throw new NotFoundException("User has not found");
         }
@@ -225,7 +232,7 @@ export class AuthService {
     async forgotPassword(req: Request, dto: ForgotPasswordRequest) {
         const {email} = dto;
 
-        const user = await this.prismaService.user.findUnique({where: {email,isActive: true}});
+        const user = await this.prismaService.user.findFirst({where: {email,isActive: true}});
         if (!user) {
             return {message: 'If this email exists, a password reset link has been sent.'};
         }
@@ -319,18 +326,24 @@ export class AuthService {
 
         const data = Object.fromEntries(Object.entries(dto).filter(([_,value])=>value!=undefined));
 
+        if (Object.keys(data).length === 0) {
+            throw new BadRequestException('No data provided for update');
+        }
+
         await this.prismaService.user.update({where:{id:currentUser.id},data});
 
         return { success: true, message: 'Updated successfully' };
 
     }
 
-    async deleteUser(req:Request){
+    async deleteMe(req:Request,res:Response){
         const currentUser = req.user as User;
 
         await this.prismaService.user.update({where:{id:currentUser.id},data:{isActive:false}});
 
         await this.prismaService.token.deleteMany({where: { userId: currentUser.id }});
+
+        res.clearCookie('refresh_token');
 
         return { success: true, message: 'Profile has been successfully deleted'};
 

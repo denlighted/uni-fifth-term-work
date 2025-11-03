@@ -70,9 +70,9 @@ export class ForaScraper{
     async parseForaProductsByCategory(categoryUrl:string): Promise<ScraperInterface[]> {
         const urls = (await this.getForaProductCardLink(categoryUrl));
 
-        const limit = pLimit(5);
+        const limit = pLimit(3);
         const browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             defaultViewport: null,
             args: [
                 "--no-sandbox",
@@ -82,60 +82,67 @@ export class ForaScraper{
         });
         const products: ScraperInterface[] = [];
 
-        const results = await Promise.all(
-            urls.map((url) =>
-                limit(async () => {
-                    const page = await browser.newPage();
-                    await page.goto(url.url, {waitUntil: 'networkidle2'});
+        try {
+            const results = await Promise.all(
+                urls.map((url) =>
+                    limit(async () => {
+                        const page = await browser.newPage();
+                        await page.goto(url.url, {waitUntil: 'domcontentloaded'});
 
 
-                    const html = await page.content();
+                        await page.waitForSelector('.product-preview_info h1', {timeout: 10000});
+                        await page.waitForSelector('.product-details-info', {timeout: 5000}).catch(() => null);
 
-                    const $ = cheerio.load(html);
-                    await page.waitForSelector('.product-preview_info h1', { timeout: 10000 });
-                    await page.waitForSelector('.product-details-info', { timeout: 5000 }).catch(() => null);
-                    const name =await page.$eval(".product-preview_info h1", el => el.textContent.trim()).catch(() => "");
-                    const imageLink = await page.$eval(
-                        ".product-preview_carousel img",
-                        el => el.getAttribute("src") || ""
-                    ).catch(() => "");
-                    const currentInteger = await page.$eval(".current-price .current-integer", el => el.textContent.trim()).catch(() => "");
-                    const currentFraction = await page.$eval(".current-price .current-fraction", el => el.textContent.trim()).catch(() => "");
-                    let price = "";
+                        const html = await page.content();
 
-                    if (currentInteger) {
-                        price = `${currentInteger}.${currentFraction.replace(/\D/g, "")}`;
-                    }
-                    const description = await page.$eval('.product-characteristics__desc', el => (el as HTMLElement).innerText.trim()).catch(() => "");
-                    const productInfo = await page.$$eval('.product-details-column', (columns) => {
-                        const info: Record<string, string> = {};
-                        for (const col of columns) {
-                            const key = col.querySelector('.product-details-label')?.textContent?.trim();
-                            const value = col.querySelector('.product-details-value')?.textContent?.trim();
-                            if (key && value) {
-                                info[key] = value;
-                            }
+                        const $ = cheerio.load(html);
+
+                        const name = await page.$eval(".product-preview_info h1", el => el.textContent.trim()).catch(() => "");
+                        const imageLink = await page.$eval(
+                            ".product-preview_carousel img",
+                            el => el.getAttribute("src") || ""
+                        ).catch(() => "");
+                        const currentInteger = await page.$eval(".current-price .current-integer", el => el.textContent.trim()).catch(() => "");
+                        const currentFraction = await page.$eval(".current-price .current-fraction", el => el.textContent.trim()).catch(() => "");
+                        let price = "";
+
+                        if (currentInteger) {
+                            price = `${currentInteger}.${currentFraction.replace(/\D/g, "")}`;
                         }
-                        return info;
-                    });
+                        const description = await page.$eval('.product-characteristics__desc', el => (el as HTMLElement).innerText.trim()).catch(() => "");
+                        const productInfo = await page.$$eval('.product-details-column', (columns) => {
+                            const info: Record<string, string> = {};
+                            for (const col of columns) {
+                                const key = col.querySelector('.product-details-label')?.textContent?.trim();
+                                const value = col.querySelector('.product-details-value')?.textContent?.trim();
+                                if (key && value) {
+                                    info[key] = value;
+                                }
+                            }
+                            return info;
+                        });
 
-                    await page.close();
+                        await page.close();
 
-                    return {
-                        name,
-                        price:price,
-                        store: "Fora",
-                        description: description.replace('Склад\n', '') || "",
-                        productInfo: productInfo,
-                        imageLink
+                        return {
+                            name,
+                            price: price,
+                            store: "Fora",
+                            description: description.replace('Склад\n', '') || "",
+                            productInfo: productInfo,
+                            imageLink
 
-                    };
-                })
-            )
-        );
+                        };
+                    })
+                )
+            );
 
-        products.push(...results);
-        await browser.close();
+            products.push(...results);
+        }
+        finally {
+            await browser.close();
+        }
+
         console.log(products.length)
         return products;
 

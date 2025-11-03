@@ -1,4 +1,17 @@
-import {Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, Query, Req, Res, UseGuards} from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Patch,
+    Post,
+    Query,
+    Req,
+    Res,
+    UseGuards
+} from '@nestjs/common';
 import {AuthService} from './auth.service';
 import type {Response, Request} from 'express';
 import {ChangePasswordRequest, LoginRequest, RegisterRequest, UpdateProfileRequest} from "./dto";
@@ -79,6 +92,13 @@ export class AuthController {
     @Authorization()
     async changeProfile(@Req() req:Request, @Body()dto: UpdateProfileRequest) {
         return this.authService.changeProfile(req,dto);
+    }
+
+    @Delete("delete-me")
+    @HttpCode(HttpStatus.OK)
+    @Authorization()
+    async deleteMe(@Req()req:Request, @Res({passthrough:true})res:Response){
+        return this.authService.deleteMe(req,res);
     }
 
     @Get('google')
