@@ -3,6 +3,7 @@ import {ScrapedCategory } from "./scraped-categories.schema";
 import {Types,Document} from "mongoose";
 import type {NextFunction} from "express";
 
+
 @Schema()
 export class ScrapedProduct  extends Document{
 

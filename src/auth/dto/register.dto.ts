@@ -1,5 +1,5 @@
 import {IsEmail, IsNotEmpty, IsOptional, IsString, Length, Matches} from "class-validator";
-import {PasswordMatches} from "../decorators/password-matches.decorator";
+import {PasswordMatches} from "../decorators";
 
 export class RegisterRequest{
 

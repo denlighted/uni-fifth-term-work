@@ -7,26 +7,6 @@ import {RoleEnum} from "../auth/enums";
 export class ScraperController {
   constructor(private readonly scraperService: ScraperService) {}
 
-  // @Get('atb/links')
-  // async getAtbProductLinks(){
-  //   return this.scraperService.getProductCardUrlAtb()
-  // }
-  //
-  // @Get('atb')
-  // async getProducts(){
-  //   return this.scraperService.getProductsAtb();
-  // }
-
-
-  // @Get('fora/links')
-  // async getForaProductsLinks(){
-  //   return this.scraperService.getForaProductLinks()
-  // }
-  //
-
-
-
-
   @Delete('categories')
   async cleanCategCollection(){
     return this.scraperService.cleanCategCollection();
@@ -56,7 +36,7 @@ export class ScraperController {
 
 
   @Get('atb/products')
-  @Authorization(RoleEnum.ADMIN)
+  //@Authorization(RoleEnum.ADMIN)
   async getAllAtbProducts() {
     return this.scraperService.getAllAtbProducts();
   }
