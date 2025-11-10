@@ -49,10 +49,10 @@ export class ScrapedProduct  extends Document{
 
 export const ScrapedProductSchema = SchemaFactory.createForClass(ScrapedProduct);
 
-ScrapedProductSchema.pre(/^find/, function (this:any,next:NextFunction) {
-    this.populate({
-        path:"category",
-        select:"name url -_id"
-    });
-    next();
-});
+// ScrapedProductSchema.pre(/^find/, function (this:any,next:NextFunction) {
+//     this.populate({
+//         path:"category",
+//         select:"name url -_id"
+//     });
+//     next();
+// });

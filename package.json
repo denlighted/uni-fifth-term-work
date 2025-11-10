@@ -48,6 +48,8 @@
     "puppeteer": "^24.26.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "slugify": "^1.6.6",
+    "string-similarity": "^4.0.4",
     "transformer": "^1.2.8"
   },
   "devDependencies": {

@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { MailModule } from './mail/mail.module';
 import { ProductsModule } from './products/products.module';
+import { ProductComparisonModule } from './product-comparison/product-comparison.module';
 
 
 @Module({
@@ -19,6 +20,7 @@ import { ProductsModule } from './products/products.module';
     PrismaModule,
     MailModule,
     ProductsModule,
+    ProductComparisonModule,
   ],
   controllers: [AppController],
   providers: [AppService],

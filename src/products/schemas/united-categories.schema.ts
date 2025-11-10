@@ -1,8 +1,9 @@
-import {Prop} from "@nestjs/mongoose";
+import {Prop, Schema, SchemaFactory} from "@nestjs/mongoose";
 import {Types} from "mongoose";
 import {ScrapedCategory, ScrapedProduct} from "../../scraper/schemas";
 import {Document} from "mongoose";
 
+@Schema()
 export class UnitedCategories extends Document {
 
     @Prop({required: [true, 'Name is required for category']})
@@ -14,3 +15,5 @@ export class UnitedCategories extends Document {
     sources: ScrapedCategory[] | Types.ObjectId[];
 
 }
+export const UnitedCategoriesSchema = SchemaFactory.createForClass(UnitedCategories);
+
