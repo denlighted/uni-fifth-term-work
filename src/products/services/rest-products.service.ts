@@ -1,7 +1,7 @@
-import {Injectable, NotFoundException, Query} from "@nestjs/common";
+import {BadRequestException, Injectable, NotFoundException, Query} from "@nestjs/common";
 import {InjectModel} from "@nestjs/mongoose";
 import {UnitedCategories, UnitedProducts} from "../schemas";
-import {Model} from "mongoose";
+import {Model, Types} from "mongoose";
 
 @Injectable()
 
@@ -21,11 +21,29 @@ export class RestProductService {
 
 
     async getUnitedProductBySlug(slug:string){
-        const unitedProd = await this.unitedProducts.findOne({slug:slug});
+        console.log(slug);
+        const unitedProd = await this.unitedProducts.findOne({slug:slug}).populate('sources unitedCategory',{__v:0}).select({__v:0, id:0});
 
         if(!unitedProd){
-            throw new NotFoundException("United products not found");
+            throw new NotFoundException("United products not found by slug");
         }
         return unitedProd;
     }
+
+
+    async getUnitedProductById(id: string) {
+        console.log('Searching for id:', id);
+
+        const unitedProd = await this.unitedProducts.findById(id).populate('reviews');
+
+        if (!unitedProd) {
+            throw new NotFoundException('United product not found by id');
+        }
+
+        return unitedProd;
+    }
+
+    async deleteProductById(id:string){
+        return this.unitedProducts.deleteOne({_id: id});
+}
 }

@@ -91,7 +91,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @Authorization()
     async changeProfile(@Req() req:Request, @Body()dto: UpdateProfileRequest) {
-        return this.authService.changeProfile(req,dto);
+        return this.authService.changeMe(req,dto);
     }
 
     @Delete("delete-me")

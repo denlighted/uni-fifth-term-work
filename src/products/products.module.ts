@@ -32,5 +32,6 @@ import {RestProductService} from "./services/rest-products.service";
 
   controllers: [ProductsController],
   providers: [ProductsService,RestProductService],
+  exports:[MongooseModule,ProductsModule]
 })
 export class ProductsModule {}

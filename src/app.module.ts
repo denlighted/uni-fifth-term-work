@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import {MiddlewareConsumer, Module, NestModule} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ScraperModule } from './scraper/scraper.module';
@@ -8,6 +8,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { MailModule } from './mail/mail.module';
 import { ProductsModule } from './products/products.module';
 import { ProductComparisonModule } from './product-comparison/product-comparison.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import {MorganMiddleware} from "@nest-middlewares/morgan";
+
 
 
 @Module({
@@ -21,8 +24,14 @@ import { ProductComparisonModule } from './product-comparison/product-comparison
     MailModule,
     ProductsModule,
     ProductComparisonModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule{
+  configure(consumer: MiddlewareConsumer): any {
+    MorganMiddleware.configure('dev')
+    consumer.apply(MorganMiddleware).forRoutes('*path');
+  }
+}

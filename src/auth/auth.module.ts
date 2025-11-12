@@ -9,20 +9,17 @@ import {getJwtConfig} from "./config";
 import {GoogleStrategy, JwtStrategy} from "./strategies";
 import {MailModule} from "../mail/mail.module";
 import {MorganMiddleware} from "@nest-middlewares/morgan";
+import {RestUserService} from "./services/rest-user.service";
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService,JwtStrategy,GoogleStrategy],
+  providers: [AuthService,JwtStrategy,GoogleStrategy,RestUserService],
   imports:[PrismaModule,MailModule,JwtModule.registerAsync({
     imports: [ConfigModule],
     useFactory: getJwtConfig,
     inject: [ConfigService],
   }),
     PassportModule,],
+  exports:[RestUserService]
 })
-export class AuthModule implements NestModule {
-  configure(consumer: MiddlewareConsumer): any {
-    MorganMiddleware.configure('dev')
-    consumer.apply(MorganMiddleware).forRoutes('*');
-  }
-}
+export class AuthModule{}

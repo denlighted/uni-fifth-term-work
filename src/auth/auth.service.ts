@@ -316,7 +316,7 @@ export class AuthService {
         return { success: true, message: 'Password changed successfully' };
     }
 
-    async changeProfile(req:Request,dto:UpdateProfileRequest) {
+    async changeMe(req:Request,dto:UpdateProfileRequest) {
         const currentUser = req.user as User;
 
         const user = await this.prismaService.user.findUnique({where:{id:currentUser.id,isActive: true},})
