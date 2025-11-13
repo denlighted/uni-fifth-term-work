@@ -24,6 +24,10 @@ model User {
 
   role RoleEnum @default(GUEST)
 
+  lat Float?
+
+  lon Float?
+
   provider String?
 
   providerId String? @map("provider_id")

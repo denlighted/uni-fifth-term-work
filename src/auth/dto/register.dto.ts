@@ -1,4 +1,4 @@
-import {IsEmail, IsNotEmpty, IsOptional, IsString, Length, Matches} from "class-validator";
+import {IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Length, Matches} from "class-validator";
 import {PasswordMatches} from "../decorators";
 
 export class RegisterRequest{
@@ -27,6 +27,14 @@ export class RegisterRequest{
     @IsNotEmpty({message:"Last name should not be empty"})
     @Length(1,100,{message:"Last name should be longer than 1 characters and shorter than 100"})
     lastName:string
+
+    @IsNumber({},{message:"Latitude should be number "})
+    @IsOptional()
+    lat?:number
+
+    @IsNumber({},{message:"Longitude should be number "})
+    @IsOptional()
+    lon?:number
 
     @IsOptional()
     @IsString()

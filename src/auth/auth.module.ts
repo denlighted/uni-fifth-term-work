@@ -1,5 +1,5 @@
 import {MiddlewareConsumer, Module, NestModule} from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService } from './services/auth.service';
 import { AuthController } from './auth.controller';
 import {PrismaModule} from "../prisma/prisma.module";
 import {JwtModule} from "@nestjs/jwt";

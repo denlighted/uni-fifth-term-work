@@ -1,4 +1,4 @@
-import {IsEmail, IsNotEmpty, IsOptional, IsString, Length, Matches} from "class-validator";
+import {IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Length, Matches} from "class-validator";
 
 export class UpdateProfileRequest{
     @IsEmail({}, { message: "Email must be a valid email address" })
@@ -17,6 +17,14 @@ export class UpdateProfileRequest{
     @Length(1,100,{message:"Last name should be longer than 1 characters and shorter than 100"})
     @IsOptional()
     lastName?:string
+
+    @IsNumber({},{message:"Latitude should be number "})
+    @IsOptional()
+    lat?:number
+
+    @IsNumber({},{message:"Longitude should be number "})
+    @IsOptional()
+    lon?:number
 
     @IsOptional()
     @IsString()

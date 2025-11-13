@@ -5,25 +5,26 @@ import {
     NotFoundException,
     UnauthorizedException
 } from '@nestjs/common';
-import {PrismaService} from "../prisma/prisma.service";
+import {PrismaService} from "../../prisma/prisma.service";
 import {ConfigService} from "@nestjs/config";
 import {JwtService} from "@nestjs/jwt";
-import type{ChangePasswordRequest, LoginRequest, RegisterRequest} from "./dto";
+import {ChangePasswordRequest, LoginRequest, RegisterRequest} from "../dto";
 import {hash, verify} from "argon2";
-import {isDev} from "../../utils";
+import {isDev} from "../../../utils";
 import type {Response, Request} from 'express'
-import {RoleEnum, TokenType} from "./enums";
+import {RoleEnum, TokenType} from "../enums";
 import ms from "ms";
 import type {StringValue} from 'ms';
-import type{JwtPayload} from "./interfaces";
-import {MailService} from "../mail/mail.service";
-import type{ForgotPasswordRequest} from "./dto";
+
+import {MailService} from "../../mail/mail.service";
+import type{ForgotPasswordRequest} from "../dto";
 import * as crypto from "node:crypto";
-import {ResetPasswordRequest} from "./dto";
-import {GooglePayload} from "./interfaces/google-oatuh.interface.jwt";
-import type{UpdateRoleRequest} from "./dto";
+import {ResetPasswordRequest} from "../dto";
+import {GooglePayload} from "../interfaces/google-oatuh.interface.jwt";
+import type{UpdateRoleRequest} from "../dto";
 import {User} from "@prisma/client";
-import type{UpdateProfileRequest} from "./dto";
+import {UpdateProfileRequest} from "../dto";
+import {JwtPayload} from "../interfaces";
 
 
 @Injectable()

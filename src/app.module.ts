@@ -10,6 +10,7 @@ import { ProductsModule } from './products/products.module';
 import { ProductComparisonModule } from './product-comparison/product-comparison.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import {MorganMiddleware} from "@nest-middlewares/morgan";
+import { GeoStoresModule } from './geo-stores/geo-stores.module';
 
 
 
@@ -25,6 +26,7 @@ import {MorganMiddleware} from "@nest-middlewares/morgan";
     ProductsModule,
     ProductComparisonModule,
     ReviewsModule,
+    GeoStoresModule,
   ],
   controllers: [AppController],
   providers: [AppService],

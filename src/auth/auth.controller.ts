@@ -12,7 +12,7 @@ import {
     Res,
     UseGuards
 } from '@nestjs/common';
-import {AuthService} from './auth.service';
+import {AuthService} from './services/auth.service';
 import type {Response, Request} from 'express';
 import {ChangePasswordRequest, LoginRequest, RegisterRequest, UpdateProfileRequest} from "./dto";
 import {Authorized} from "./decorators";

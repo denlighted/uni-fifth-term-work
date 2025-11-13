@@ -1,40 +1,79 @@
-import {Injectable} from '@nestjs/common';
+import {Injectable, NotFoundException} from '@nestjs/common';
 import axios from "axios";
+import {ConfigService} from "@nestjs/config";
+import {PrismaService} from "../prisma/prisma.service";
+import {User} from "@prisma/client";
+import type {Request, Response} from "express";
+import {StoreInfoInterface} from "./interfaces/store-info.interface";
 
 @Injectable()
 export class GeoStoresService {
 
-    async getSupermarkets() {
-        const query = `
-[out:json][timeout:25];
-(
-  node["shop"="supermarket"]["brand"="АТБ-Маркет"](around:2000,50.4380,30.5219);
-  way["shop"="supermarket"]["brand"="АТБ-Маркет"](around:2000,50.4380,30.5219);
-  relation["shop"="supermarket"]["brand"="АТБ-Маркет"](around:2000,50.4380,30.5219);
-);
-out center;
-`;
-        const url = "https://overpass-api.de/api/interpreter";
+    private readonly RADIUS: number;
+    private readonly URL:string;
 
-        const { data } = await axios.post(url, `data=${encodeURIComponent(query)}`, {
-            headers: { "Content-Type": "application/x-www-form-urlencoded",
-                'User-Agent': 'MyTestApp/1.0 (https://example.com)'},
-            timeout: 30000
-        });
+    constructor(private readonly configService: ConfigService,
+                private readonly prismaService: PrismaService,) {
+        this.RADIUS = configService.getOrThrow<number>("SEARCH_RADIUS")
+        this.URL = configService.getOrThrow<string>("OVERPASS_API_URL")
 
-        const stores = (data.elements || []).map((el) => ({
-            id: el.id,
-            name: el.tags?.name || "Неизвестный супермаркет",
-            brand: el.tags?.brand || null,
-            address: `${el.tags?.["addr:street"] || ""} ${el.tags?.["addr:housenumber"] || ""}`.trim(),
-            lat: el.lat || el.center?.lat,
-            lon: el.lon || el.center?.lon,
-        }));
-
-        console.log("✅ Найдено супермаркетов:", stores.length);
-        return stores;
     }
 
+    private async getSupermarketsByBrandAndGeo(brand: string, req:Request): Promise<StoreInfoInterface[]> {
+
+        const currentUser  = req.user as User;
+
+        const user = await this.prismaService.user.findUnique({where: {id: currentUser.id, isActive:true}});
+        
+
+        if(!user){
+            throw new NotFoundException("User has no been found");
+        }
+
+        if (user.lat == null || user.lon == null){
+            return []
+        }
+
+        const query = `
+        [out:json][timeout:25];
+        (
+          node["shop"="supermarket"]["brand"="${brand}"](around:${this.RADIUS},${user.lat},${user.lon});
+          way["shop"="supermarket"]["brand"="${brand}"](around:${this.RADIUS},${user.lat},${user.lon});
+          relation["shop"="supermarket"]["brand"="${brand}"](around:${this.RADIUS},${user.lat},${user.lon});
+        );
+        out center;
+    `;
+
+        try {
+            const {data} = await axios.post(this.URL, `data=${encodeURIComponent(query)}`, {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "User-Agent": "GeoStoresService/1.0",
+                    "Accept-Encoding": "gzip"
+                },
+                timeout: 30000
+            });
+
+            return (data.elements || []).map(el => ({
+                id: el.id,
+                name: el.tags?.name || "Unknown market",
+                brand: el.tags?.brand || brand,
+                address: `${el.tags?.["addr:street"] || ""} ${el.tags?.["addr:housenumber"] || ""}`.trim(),
+                lat: el.lat || el.center?.lat,
+                lon: el.lon || el.center?.lon,
+            }));
+        } catch (err) {
+            console.error(`[Overpass API] Error fetching ${brand}:`, err.message);
+            return [];
+        }
+    }
+
+    async getSupermarketsGeo(req: Request):Promise<StoreInfoInterface[]> {
+        const foraStores = await this.getSupermarketsByBrandAndGeo('Фора',req);
+        const atbStores = await this.getSupermarketsByBrandAndGeo('АТБ-Маркет',req);
+
+        return foraStores.concat(atbStores)
+    }
 
 
 }
