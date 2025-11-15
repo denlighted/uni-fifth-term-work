@@ -1,9 +1,9 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
 import axios from "axios";
 import {ConfigService} from "@nestjs/config";
 import {PrismaService} from "../prisma/prisma.service";
 import {User} from "@prisma/client";
-import type {Request, Response} from "express";
+import {Request, Response} from "express";
 import {StoreInfoInterface} from "./interfaces/store-info.interface";
 
 @Injectable()
@@ -30,16 +30,25 @@ export class GeoStoresService {
             throw new NotFoundException("User has no been found");
         }
 
-        if (user.lat == null || user.lon == null){
-            return []
+        if(!user.address){
+            throw new BadRequestException("User has not specified address yet");
         }
+
+        const geo =  await this.geocodeAddress(user.address);
+
+        if(!geo){
+            throw new BadRequestException("Unable to geocode user address");
+        }
+
+        const{lat,lon} = geo;
+
 
         const query = `
         [out:json][timeout:25];
         (
-          node["shop"="supermarket"]["brand"="${brand}"](around:${this.RADIUS},${user.lat},${user.lon});
-          way["shop"="supermarket"]["brand"="${brand}"](around:${this.RADIUS},${user.lat},${user.lon});
-          relation["shop"="supermarket"]["brand"="${brand}"](around:${this.RADIUS},${user.lat},${user.lon});
+          node["shop"="supermarket"]["brand"="${brand}"](around:${this.RADIUS},${lat}, ${lon});
+          way["shop"="supermarket"]["brand"="${brand}"](around:${this.RADIUS},${lat}, ${lon});
+          relation["shop"="supermarket"]["brand"="${brand}"](around:${this.RADIUS},${lat}, ${lon});
         );
         out center;
     `;
@@ -73,6 +82,29 @@ export class GeoStoresService {
         const atbStores = await this.getSupermarketsByBrandAndGeo('АТБ-Маркет',req);
 
         return foraStores.concat(atbStores)
+    }
+
+     private async geocodeAddress(address:string){
+         const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json`;
+
+         const { data } = await axios.get(url, {
+             params: {
+                 access_token: this.configService.getOrThrow("MAPBOX_PUBLIC_TOKEN"),
+                 limit: 1,
+                 language: "uk"
+             }
+         });
+
+         if (!data.features.length) return null;
+
+         const f = data.features[0];
+
+         return {
+             lat: f.center[1],
+             lon: f.center[0],
+             displayName: f.place_name,
+         };
+
     }
 
 

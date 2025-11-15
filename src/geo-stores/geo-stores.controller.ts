@@ -22,4 +22,5 @@ export class GeoStoresController {
   async getSupermarketsGeo(@Req() req:Request){
     return this.geoStoresService.getSupermarketsGeo(req)
   }
+
 }

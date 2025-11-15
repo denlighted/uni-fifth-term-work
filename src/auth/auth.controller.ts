@@ -10,7 +10,8 @@ import {
     Query,
     Req,
     Res,
-    UseGuards
+    UseGuards,
+    Param
 } from '@nestjs/common';
 import {AuthService} from './services/auth.service';
 import type {Response, Request} from 'express';
@@ -23,10 +24,12 @@ import {AuthGuard} from "@nestjs/passport";
 import {GooglePayload} from "./interfaces/google-oatuh.interface.jwt";
 import {RoleEnum} from "./enums";
 import  type {UpdateRoleRequest} from "./dto";
+import {RestUserService} from "./services/rest-user.service";
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {
+    constructor(private readonly authService: AuthService,
+                private readonly restUserService: RestUserService) {
     }
 
 
@@ -113,6 +116,15 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async googleAuthCallback(@Req() req:Request, @Res({passthrough:true}) res:Response){
         return this.authService.googleAuth(res, req.user as GooglePayload);
+    }
+
+    ////////////////////////////////////////////
+
+    @Get('user/:id')
+    @Authorization()
+    @HttpCode(HttpStatus.OK)
+    async getUserById(@Param('id') id: string){
+        return this.restUserService.getUserById(id)
     }
 
 }

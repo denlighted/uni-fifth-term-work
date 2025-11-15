@@ -24,9 +24,7 @@ model User {
 
   role RoleEnum @default(GUEST)
 
-  lat Float?
-
-  lon Float?
+  address String?
 
   provider String?
 
