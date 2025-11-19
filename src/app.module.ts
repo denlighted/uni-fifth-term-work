@@ -11,6 +11,8 @@ import { ProductComparisonModule } from './product-comparison/product-comparison
 import { ReviewsModule } from './reviews/reviews.module';
 import {MorganMiddleware} from "@nest-middlewares/morgan";
 import { GeoStoresModule } from './geo-stores/geo-stores.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { BestCartModule } from './best-cart/best-cart.module';
 
 
 
@@ -27,6 +29,8 @@ import { GeoStoresModule } from './geo-stores/geo-stores.module';
     ProductComparisonModule,
     ReviewsModule,
     GeoStoresModule,
+    FavoritesModule,
+    BestCartModule,
   ],
   controllers: [AppController],
   providers: [AppService],

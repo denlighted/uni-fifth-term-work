@@ -10,7 +10,7 @@ import {PrismaModule} from "../prisma/prisma.module";
 import {ProductsModule} from "../products/products.module";
 import {RestProductService} from "../products/services/rest-products.service";
 import {AuthModule} from "../auth/auth.module";
-import {UserPopulatingInterceptor} from "./interceptors/user-populating.interceptor";
+import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.interceptor";
 
 @Module({
   imports:[MongooseModule.forRootAsync({

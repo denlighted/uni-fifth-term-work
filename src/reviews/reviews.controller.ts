@@ -3,7 +3,7 @@ import { ReviewsService } from './reviews.service';
 import {ReviewRequest} from "./dto";
 import type {Request} from 'express'
 import {Authorization} from "../auth/decorators";
-import {UserPopulatingInterceptor} from "./interceptors/user-populating.interceptor";
+import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.interceptor";
 
 @Controller('reviews')
 export class ReviewsController {

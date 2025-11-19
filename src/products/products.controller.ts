@@ -52,7 +52,6 @@ export class ProductsController {
         return this.restProductService.getUnitedProductById(id);
     }
 
-
     /// Test method for brand checking
 
     @Get('test')

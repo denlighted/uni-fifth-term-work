@@ -10,7 +10,7 @@ import {ConfigService} from "@nestjs/config";
 import {JwtService} from "@nestjs/jwt";
 import {ChangePasswordRequest, LoginRequest, RegisterRequest} from "../dto";
 import {hash, verify} from "argon2";
-import {isDev} from "../../../utils";
+import {isDev} from "../../utils";
 import type {Response, Request} from 'express'
 import {RoleEnum, TokenType} from "../enums";
 import ms from "ms";

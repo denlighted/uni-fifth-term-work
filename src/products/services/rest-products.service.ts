@@ -15,7 +15,7 @@ export class RestProductService {
     }
 
     async getAllUnitedProducts(){
-        return await this.unitedProducts.find().populate('unitedCategory sources');
+        const query = this.unitedProducts.find().populate('unitedCategory sources');
     }
 
 
