@@ -28,10 +28,9 @@ export class ReviewsService {
          return await this.reviews.findById(id);
      }
 
-     async createReview(productSlug:string,req:Request,dto:ReviewRequest){
+     async createReview(productSlug:string,userId:string,dto:ReviewRequest){
          const{review,rating} = dto;
 
-         const currentUser = req.user as User;
 
          const product = await this.restProductService.getUnitedProductBySlug(productSlug);
          if (!product) {
@@ -42,27 +41,21 @@ export class ReviewsService {
              review,
              rating,
              unitedProduct: product._id,
-             userId:currentUser.id
+             userId:userId
          });
 
          return newReview;
      }
 
-     async deleteReviewById(req:Request,id:string){
-
-         const currentUser = req.user as User;
+     async deleteReviewById(userId:string, role:RoleEnum,id:string){
 
          const review = await this.reviews.findById(id);
-
-         if (!currentUser) {
-             throw new UnauthorizedException("You are not authorized");
-         }
 
          if (!review) {
              throw new NotFoundException("Review not found");
          }
 
-         if(currentUser.id !== review.userId && currentUser.role !== RoleEnum.ADMIN){
+         if(userId !== review.userId && role !== RoleEnum.ADMIN){
              throw new ForbiddenException("You cannot delete this review. It does not belong to you!");
          }
 
@@ -71,20 +64,17 @@ export class ReviewsService {
          return {success:"true", message:"The review has been successfully deleted"}
      }
 
-     async updateReview(req:Request,id: string, dto:ReviewRequest){
-         const currentUser = req.user as User;
+     async updateReview(userId:string,id: string, dto:ReviewRequest){
+
          const {review, rating} = dto;
          const reviewFromDb = await this.reviews.findById(id);
 
-         if (!currentUser) {
-             throw new UnauthorizedException("You are not authorized");
-         }
 
          if (!reviewFromDb) {
              throw new NotFoundException("Review not found");
          }
 
-         if(currentUser.id !== reviewFromDb.userId){
+         if(userId !== reviewFromDb.userId){
              throw new ForbiddenException("You cannot edit this review. It does not belong to you!");
          }
 

@@ -4,6 +4,7 @@ import {ReviewRequest} from "./dto";
 import type {Request} from 'express'
 import {Authorization} from "../auth/decorators";
 import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.interceptor";
+import {User} from "@prisma/client";
 
 @Controller('reviews')
 export class ReviewsController {
@@ -24,19 +25,22 @@ export class ReviewsController {
   @Authorization()
   @Post('create-review/:productSlug')
   async createReview(@Param('productSlug') productSlug:string,@Req() req:Request , @Body() dto:ReviewRequest){
-    return await this.reviewsService.createReview(productSlug, req,dto);
+    const currentUser = req.user as User
+    return await this.reviewsService.createReview(productSlug, currentUser.id,dto);
   }
 
   @Authorization()
   @Patch("update-review/:id")
   async updateReview(@Req() req:Request,@Param('id') id:string ,@Body() dto:ReviewRequest){
-    return await this.reviewsService.updateReview(req,id,dto)
+    const currentUser = req.user as User
+    return await this.reviewsService.updateReview(currentUser.id,id,dto)
   }
 
   @Authorization()
   @Delete("delete-review/:id")
   async deleteReview(@Req() req:Request,@Param('id') id:string){
-    return await this.reviewsService.deleteReviewById(req,id)
+    const currentUser = req.user as User;
+    return await this.reviewsService.deleteReviewById(currentUser.id, currentUser.role,id)
   }
 
 }

@@ -2,6 +2,7 @@ import {Controller, Get, Req} from '@nestjs/common';
 import { GeoStoresService } from './geo-stores.service';
 import type{Request} from "express";
 import {Authorization} from "../auth/decorators";
+import {User} from "@prisma/client";
 
 @Controller('geo-stores')
 export class GeoStoresController {
@@ -20,7 +21,8 @@ export class GeoStoresController {
   @Authorization()
   @Get('stores')
   async getSupermarketsGeo(@Req() req:Request){
-    return this.geoStoresService.getSupermarketsGeo(req)
+    const currentUser = req.user as User;
+    return this.geoStoresService.getSupermarketsGeo(currentUser.id)
   }
 
 }

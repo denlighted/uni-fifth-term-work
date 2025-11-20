@@ -19,11 +19,11 @@ export class GeoStoresService {
 
     }
 
-    private async getSupermarketsByBrandAndGeo(brand: string, req:Request): Promise<StoreInfoInterface[]> {
+    private async getSupermarketsByBrandAndGeo(brand: string, userId:string): Promise<StoreInfoInterface[]> {
 
-        const currentUser  = req.user as User;
 
-        const user = await this.prismaService.user.findUnique({where: {id: currentUser.id, isActive:true}});
+
+        const user = await this.prismaService.user.findUnique({where: {id: userId, isActive:true}});
         
 
         if(!user){
@@ -77,9 +77,9 @@ export class GeoStoresService {
         }
     }
 
-    async getSupermarketsGeo(req: Request):Promise<StoreInfoInterface[]> {
-        const foraStores = await this.getSupermarketsByBrandAndGeo('Фора',req);
-        const atbStores = await this.getSupermarketsByBrandAndGeo('АТБ-Маркет',req);
+    async getSupermarketsGeo(userId:string):Promise<StoreInfoInterface[]> {
+        const foraStores = await this.getSupermarketsByBrandAndGeo('Фора',userId);
+        const atbStores = await this.getSupermarketsByBrandAndGeo('АТБ-Маркет',userId);
 
         return foraStores.concat(atbStores)
     }
