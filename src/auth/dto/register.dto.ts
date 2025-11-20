@@ -28,14 +28,6 @@ export class RegisterRequest{
     @Length(1,100,{message:"Last name should be longer than 1 characters and shorter than 100"})
     lastName:string
 
-    @IsNumber({},{message:"Latitude should be number "})
-    @IsOptional()
-    lat?:number
-
-    @IsNumber({},{message:"Longitude should be number "})
-    @IsOptional()
-    lon?:number
-
     @IsOptional()
     @IsString()
     @Length(1,15,)
