@@ -19,10 +19,20 @@ export class QueryBuilder {
           return this;
      }
 
+     sorting(){
+          if(this.dto.sort){
+               const sortBy = this.dto.sort.split(',').join(' ');
+               this.query =this.query.sort(sortBy);
+          }
+          else{
+               this.query =this.query.select("-__v");
+          }
+          return this;
+     }
+
      limiting(){
           if(this.dto.fields){
                const fieldsBy = this.dto.fields.split(',').join(' ');
-               console.log(fieldsBy);
                this.query = this.query.select(fieldsBy)
           }
           else{

@@ -17,11 +17,12 @@ export class RestProductService {
         return await this.unitedCategories.find().populate('sources');
     }
 
-    async getAllUnitedProducts(queryDto: ProductFilterDto){
+    async getAllUnitedProducts(queryDto:ProductFilterDto){
         const query = this.unitedProducts.find().populate('unitedCategory sources');
 
         return new QueryBuilder(queryDto,query)
             .filter()
+            .sorting()
             .pagination()
             .limiting()
             .build();

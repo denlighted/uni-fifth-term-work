@@ -40,8 +40,7 @@ export class ProductsController {
     }
 
     @Get("all-united-products")
-    @UsePipes(new ValidationPipe({ whitelist: false, transform: true }))
-    async getAllUnitedProducts(@Query() query:ProductFilterDto) {
+    async getAllUnitedProducts(@Query() query:BaseQueryDto|ProductFilterDto) {
         return this.restProductService.getAllUnitedProducts(query);
     }
 
