@@ -2,6 +2,9 @@ import {BadRequestException, Injectable, NotFoundException, Query} from "@nestjs
 import {InjectModel} from "@nestjs/mongoose";
 import {UnitedCategories, UnitedProducts} from "../schemas";
 import {Model, Types} from "mongoose";
+import {QueryBuilder} from "../../utils/query-builder";
+import {BaseQueryDto} from "../../common/dto/query.dto";
+import {ProductFilterDto} from "../../common/dto/product-filter.dto";
 
 @Injectable()
 
@@ -14,8 +17,14 @@ export class RestProductService {
         return await this.unitedCategories.find().populate('sources');
     }
 
-    async getAllUnitedProducts(){
+    async getAllUnitedProducts(queryDto: ProductFilterDto){
         const query = this.unitedProducts.find().populate('unitedCategory sources');
+
+        return new QueryBuilder(queryDto,query)
+            .filter()
+            .pagination()
+            .limiting()
+            .build();
     }
 
 

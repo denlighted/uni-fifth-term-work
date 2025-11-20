@@ -1,8 +1,10 @@
-import {Body, Controller, Get, Param, Post, Query} from '@nestjs/common';
+import {Body, Controller, Get, Param, Post, Query, UsePipes, ValidationPipe} from '@nestjs/common';
 import {ProductsService} from './services/products.service';
 import type {PrivateBrandsRequest} from "./dto";
 import {RestProductService} from "./services/rest-products.service";
 import {ParseObjectIdPipe} from "@nestjs/mongoose";
+import {BaseQueryDto} from "../common/dto/query.dto";
+import {ProductFilterDto} from "../common/dto/product-filter.dto";
 
 
 @Controller('products')
@@ -38,8 +40,9 @@ export class ProductsController {
     }
 
     @Get("all-united-products")
-    async getAllUnitedProducts() {
-        return this.restProductService.getAllUnitedProducts();
+    @UsePipes(new ValidationPipe({ whitelist: false, transform: true }))
+    async getAllUnitedProducts(@Query() query:ProductFilterDto) {
+        return this.restProductService.getAllUnitedProducts(query);
     }
 
     @Get('slug/:slug')
