@@ -1,0 +1,9 @@
+
+export interface RegisterRequest {
+    email:string
+    password:string
+    passwordConfirm:string
+    firstName:string
+    lastName:string
+    phoneNumber?:string
+}
