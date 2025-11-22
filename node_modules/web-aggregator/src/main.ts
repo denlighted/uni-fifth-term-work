@@ -19,11 +19,11 @@ async function bootstrap() {
     }));
 
     app.enableCors({
-        origin: config.get<string>('ALLOWED_ORIGINS')?.split(',') ?? [],
+        origin: "http://localhost:5173",
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         exposeHeaders: ['Set-Cookie', 'Content-Disposition'],
-        allowedHeaders: ['Authorization', 'X-Api-Key'],
+        allowedHeaders: ['Authorization', 'X-Api-Key','Content-type'],
 
     })
 

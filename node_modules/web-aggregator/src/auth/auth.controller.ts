@@ -18,18 +18,20 @@ import type {Response, Request} from 'express';
 import {ChangePasswordRequest, LoginRequest, RegisterRequest, UpdateProfileRequest} from "./dto";
 import {Authorized} from "./decorators";
 import {Authorization} from "./decorators";
-import type {ForgotPasswordRequest} from "./dto";
-import type{ResetPasswordRequest} from "./dto";
+import {ForgotPasswordRequest} from "./dto";
+import {ResetPasswordRequest} from "./dto";
 import {AuthGuard} from "@nestjs/passport";
 import {GooglePayload} from "./interfaces/google-oatuh.interface.jwt";
 import {RoleEnum} from "./enums";
 import  type {UpdateRoleRequest} from "./dto";
 import {RestUserService} from "./services/rest-user.service";
+import {ConfigService} from "@nestjs/config";
 
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService,
-                private readonly restUserService: RestUserService) {
+                private readonly restUserService: RestUserService,
+                private readonly configService: ConfigService,) {
     }
 
 
@@ -115,7 +117,8 @@ export class AuthController {
     @UseGuards(AuthGuard('google'))
     @HttpCode(HttpStatus.OK)
     async googleAuthCallback(@Req() req:Request, @Res({passthrough:true}) res:Response){
-        return this.authService.googleAuth(res, req.user as GooglePayload);
+        await this.authService.googleAuth(res, req.user as GooglePayload);
+        return res.redirect(this.configService.getOrThrow("FRONTEND_HOST"));
     }
 
     ////////////////////////////////////////////

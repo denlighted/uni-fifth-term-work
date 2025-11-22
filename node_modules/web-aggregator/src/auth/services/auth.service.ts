@@ -8,16 +8,15 @@ import {
 import {PrismaService} from "../../prisma/prisma.service";
 import {ConfigService} from "@nestjs/config";
 import {JwtService} from "@nestjs/jwt";
-import {ChangePasswordRequest, LoginRequest, RegisterRequest} from "../dto";
+import {AuthResponse, ChangePasswordRequest, LoginRequest, RegisterRequest} from "../dto";
 import {hash, verify} from "argon2";
 import {isDev} from "../../utils";
 import type {Response, Request} from 'express'
 import {RoleEnum, TokenType} from "../enums";
 import ms from "ms";
 import type {StringValue} from 'ms';
-
 import {MailService} from "../../mail/mail.service";
-import type{ForgotPasswordRequest} from "../dto";
+import {ForgotPasswordRequest} from "../dto";
 import * as crypto from "node:crypto";
 import {ResetPasswordRequest} from "../dto";
 import {GooglePayload} from "../interfaces/google-oatuh.interface.jwt";
@@ -247,7 +246,11 @@ export class AuthService {
                 expiresAt
             }
         });
-        const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password?token=${resetToken}`;
+
+        const frontendHost = this.configService.getOrThrow<string>('FRONTEND_HOST');
+
+        const resetUrl = `${frontendHost}/auth/reset-password?token=${resetToken}`;
+
 
 
         await this.mailService.sendMail(
