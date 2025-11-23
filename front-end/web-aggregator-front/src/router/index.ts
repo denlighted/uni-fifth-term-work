@@ -4,6 +4,7 @@ import LoginForm from "../views/auth/LoginForm.vue";
 import RegisterForm from "../views/auth/RegisterForm.vue";
 import ForgotPasswordModal from '@/views/auth/ForgotPasswordModal.vue';
 import ResetPasswordForm from "../views/auth/ResetPasswordForm.vue";
+import UserProfile from "../views/profiles/UserProfile.vue";
 
 
 
@@ -34,6 +35,12 @@ const routes = [
         path: '/auth/reset-password',
         name: 'reset-password',
         component:ResetPasswordForm
+    },
+
+    {
+    path:'/profile',
+    name: 'user-profile',
+    component: UserProfile
     }
 
 ];

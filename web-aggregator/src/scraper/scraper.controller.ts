@@ -12,7 +12,7 @@ export class ScraperController {
     return this.scraperService.cleanCategCollection();
   }
 
-  @Delete('products')
+  @Delete('pages')
   async cleanProdCollection(){
     return this.scraperService.cleanProdCollection();
   }
@@ -23,45 +23,45 @@ export class ScraperController {
     return this.scraperService.deleteForaProd()
   }
 
-  @Post('all/atb/products')
+  @Post('all/atb/pages')
   async writeAllAtbProducts(){
     return this.scraperService.writeAllAtbProducts();
   }
 
-  @Post('all/fora/products')
+  @Post('all/fora/pages')
   async writeAllForaProducts(){
     return this.scraperService.writeAllForaProducts();
   }
 
 
 
-  @Get('atb/products')
+  @Get('atb/pages')
   //@Authorization(RoleEnum.ADMIN)
   async getAllAtbProducts() {
     return this.scraperService.getAllAtbProducts();
   }
 
-  @Get('atb/products/:id')
+  @Get('atb/pages/:id')
   async getAtbProductById(@Param('id') id: string) {
     return this.scraperService.getAtbProductById(id);
   }
 
-  @Get('fora/products')
+  @Get('fora/pages')
   async getAllForaProduct() {
     return this.scraperService.getAllForaProducts();
   }
 
-  @Get('fora/products/:id')
+  @Get('fora/pages/:id')
   async getForaProductById(@Param('id') id: string) {
     return this.scraperService.getForaProductById(id);
   }
 
-  @Post('atb/products/:categoryId')
+  @Post('atb/pages/:categoryId')
   async writeAtbProductsByCategory(@Param('categoryId')categoryId:string){
     return this.scraperService.writeAtbProductsByCategory(categoryId);
   }
 
-  @Post('fora/products/:categoryId')
+  @Post('fora/pages/:categoryId')
   async writeForaProductsByCategory(@Param('categoryId')categoryId:string){
     return this.scraperService.writeForaProductsByCategory(categoryId);
   }

@@ -18,14 +18,14 @@
         <div class="search-header">
           <h2 class="section-title">Price Aggregator</h2>
           <div class="city-selector">
-            <MapPin :size="20" />
+            <MapPin :size="20"/>
             <span class="city-label">City</span>
           </div>
         </div>
 
         <div class="search-inputs">
           <div class="input-wrapper">
-            <Search class="input-icon" :size="18" />
+            <Search class="input-icon" :size="18"/>
             <input
                 type="text"
                 placeholder="Choose a store"
@@ -33,7 +33,7 @@
             />
           </div>
           <div class="input-wrapper">
-            <Search class="input-icon" :size="18" />
+            <Search class="input-icon" :size="18"/>
             <input
                 type="text"
                 placeholder="Select a category"
@@ -41,7 +41,7 @@
             />
           </div>
           <div class="input-wrapper">
-            <Search class="input-icon" :size="18" />
+            <Search class="input-icon" :size="18"/>
             <input
                 type="text"
                 placeholder="Search for a product or barcode"
@@ -99,33 +99,57 @@
 
           <div class="products-grid">
             <div
-                v-for="product in sortedProducts"
-                :key="product.id"
+                v-for="product in paginatedProducts" :key="product.id"
                 class="product-card"
             >
+              <!-- Image carousel -->
               <div class="product-image">
-                <div class="image-placeholder">
-                  <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-                    <circle cx="45" cy="35" r="12" fill="currentColor"/>
-                    <path d="M20 100 L40 70 L60 85 L100 40" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                  </svg>
+                <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
+                <transition name="fade" mode="out-in">
+                  <img
+                      v-if="product.images && product.images.length"
+                      :key="currentImageIndex[product.id]"
+                      :src="product.images[currentImageIndex[product.id]]"
+                      alt="Product Image"
+                      class="image"
+                  />
+                </transition>
+                <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
+                <!-- Dots -->
+                <div class="dots" v-if="product.images && product.images.length > 1">
+              <span
+            v-for="(img, index) in product.images"
+            :key="index"
+            :class="['dot', { active: currentImageIndex[product.id] === index }]"
+            @click="goToImage(product.id, index)"
+             ></span>
                 </div>
               </div>
+
               <div class="product-info">
                 <h3 class="product-name">{{ product.name }}</h3>
+
+                <!-- Цены по магазинам -->
                 <div class="product-prices">
                   <div
-                      v-for="price in product.prices"
-                      :key="price.store"
+                      v-for="source in product.sources"
+                      :key="source._id"
                       class="price-row"
                   >
-                    <span class="price-store">{{ price.store }}</span>
-                    <span class="price-value">{{ price.value }}</span>
+                    <span class="price-store">{{ source.store }}</span>
+                    <span class="price-value">{{ source.price }} ₴</span>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
+          <div class="pagination">
+            <button @click="prevPage" :disabled="currentPage === 1">Prev</button>
+            <span>{{ currentPage }} / {{ totalPages }}</span>
+            <button @click="nextPage" :disabled="currentPage === totalPages">Next</button>
+          </div>
+
         </main>
       </div>
     </div>
@@ -133,78 +157,79 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { Search, MapPin } from 'lucide-vue-next'
+import {ref, computed, onMounted} from 'vue'
+import {Search, MapPin} from 'lucide-vue-next'
+import {getAllUnitedProducts} from "@/api/pages/main-page-all-products.js";
 
-const stores = ref([
-  { id: 1, name: 'Store 1', selected: true },
-  { id: 2, name: 'Store 2', selected: false },
-  { id: 3, name: 'Store 3', selected: true },
-  { id: 4, name: 'Store 4', selected: false }
-])
-
+const products = ref([]);
+const currentImageIndex = ref({});
 const sortOrder = ref('cheap')
 
-const products = ref([
-  {
-    id: 1,
-    name: 'Product 1',
-    prices: [
-      { store: 'Store 1', value: '30.49' },
-      { store: 'Store 3', value: '52.39' }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Product 2',
-    prices: [
-      { store: 'Store 1', value: '29.99' },
-      { store: 'Store 3', value: '51.99' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Product 3',
-    prices: [
-      { store: 'Store 1', value: '34.49' },
-      { store: 'Store 3', value: '57.59' }
-    ]
-  },
-  {
-    id: 4,
-    name: 'Product 4',
-    prices: [
-      { store: 'Store 1', value: '25.89' },
-      { store: 'Store 3', value: '50.39' }
-    ]
-  },
-  {
-    id: 5,
-    name: 'Product 5',
-    prices: [
-      { store: 'Store 1', value: '28.33' },
-      { store: 'Store 3', value: '51.39' }
-    ]
-  },
-  {
-    id: 6,
-    name: 'Product 6',
-    prices: [
-      { store: 'Store 1', value: '30.59' },
-      { store: 'Store 3', value: '53.39' }
-    ]
-  }
-])
+const paginatedProducts = ref([]);
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalPages = ref(1);
 
-const sortedProducts = computed(() => {
-  const sorted = [...products.value]
-  sorted.sort((a, b) => {
-    const priceA = parseFloat(a.prices[0].value)
-    const priceB = parseFloat(b.prices[0].value)
-    return sortOrder.value === 'cheap' ? priceA - priceB : priceB - priceA
-  })
-  return sorted
-})
+
+onMounted(() => {
+  loadProducts();
+});
+
+function nextImage(productId) {
+  const p = products.value.find(p => p.id === productId);
+  currentImageIndex.value[productId] =
+      (currentImageIndex.value[productId] + 1) % p.images.length;
+}
+
+function prevImage(productId) {
+  const p = products.value.find(p => p.id === productId);
+  currentImageIndex.value[productId] =
+      (currentImageIndex.value[productId] - 1 + p.images.length) % p.images.length;
+}
+
+function goToImage(productId, index) {
+  currentImageIndex.value[productId] = index;
+}
+
+async function loadProducts() {
+  try {
+    const response = await getAllUnitedProducts();
+    products.value = response.data.map(p => {
+      currentImageIndex.value[p.id] = 0;
+      return {
+        ...p,
+        images: p.sources.map(s => s.imageLink)
+      }
+    });
+
+    totalPages.value = Math.ceil(products.value.length / pageSize.value);
+    updatePaginatedProducts();
+  } catch (error) {
+    console.error("Error loading pages", error);
+  }
+}
+
+function updatePaginatedProducts() {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  paginatedProducts.value = products.value.slice(start, end);
+}
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+    updatePaginatedProducts();
+  }
+}
+
+function prevPage() {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+    updatePaginatedProducts();
+  }
+}
+
+
 </script>
 
 <style scoped>
@@ -483,11 +508,69 @@ const sortedProducts = computed(() => {
 }
 
 .product-image {
-  aspect-ratio: 1 / 1;
-  background-color: #e5e7eb;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #e5e7eb;
+  padding: 8px;
+}
+
+.product-image img {
+  max-width: 120px;
+  max-height: 120px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.4);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 4px;
+  z-index: 10;
+}
+
+.nav-btn.left { left: 4px; }
+.nav-btn.right { right: 4px; }
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #cbd5e1;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.dot.active {
+  background-color: #1f2937;
+}
+
+/* Fade animation for transition */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-to, .fade-leave-from {
+  opacity: 1;
 }
 
 .image-placeholder {

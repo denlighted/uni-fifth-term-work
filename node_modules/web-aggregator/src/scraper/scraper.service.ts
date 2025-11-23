@@ -164,7 +164,7 @@ export class ScraperService {
         const {url} = await this.getForaCategoryById(categoryId)
         const products = await this.foraScraper.parseForaProductsByCategory(url)
         if(!Array.isArray(products) || products.length===0){
-            throw new NotFoundException("There are no products for record")
+            throw new NotFoundException("There are no pages for record")
         }
         const productsWithCategory = products.map((p) => ({
             ...p,
@@ -180,7 +180,7 @@ export class ScraperService {
         const products = await this.atbScraper.parseAtbShop(url)
 
         if(!Array.isArray(products) || products.length===0){
-            throw new NotFoundException("There are no products for record")
+            throw new NotFoundException("There are no pages for record")
         }
 
         const productsWithCategory = products.map((p) => ({

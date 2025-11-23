@@ -35,7 +35,7 @@ export class RestProductService {
         const unitedProd = await this.unitedProducts.findOne({slug:slug}).populate('sources unitedCategory',{__v:0}).select({__v:0, id:0});
 
         if(!unitedProd){
-            throw new NotFoundException("United products not found by slug");
+            throw new NotFoundException("United pages not found by slug");
         }
         return unitedProd;
     }
