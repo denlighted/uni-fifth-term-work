@@ -8,7 +8,7 @@ import {ProductFilterDto} from "../common/dto/product-filter.dto";
 import {TransformNestQueryPipe} from "../common/pipes/transform-nested-query.pipe";
 
 
-@Controller('pages')
+@Controller('products')
 export class ProductsController {
     constructor(private readonly productsService: ProductsService,
                 private readonly restProductService: RestProductService,) {
@@ -40,7 +40,7 @@ export class ProductsController {
         return this.restProductService.getAllUnitedCategories();
     }
 
-    @Get("all-united-pages")
+    @Get("all-united-products")
     async getAllUnitedProducts(
         @Query(new TransformNestQueryPipe()) query: any
     ) {

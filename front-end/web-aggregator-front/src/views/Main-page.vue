@@ -145,9 +145,17 @@
             </div>
           </div>
           <div class="pagination">
-            <button @click="prevPage" :disabled="currentPage === 1">Prev</button>
-            <span>{{ currentPage }} / {{ totalPages }}</span>
-            <button @click="nextPage" :disabled="currentPage === totalPages">Next</button>
+            <button class="page-btn" @click="prevPage" :disabled="currentPage === 1">
+              Prev
+            </button>
+
+            <div class="page-numbers">
+              <span class="page-indicator">{{ currentPage }} / {{ totalPages }}</span>
+            </div>
+
+            <button class="page-btn" @click="nextPage" :disabled="currentPage === totalPages">
+              Next
+            </button>
           </div>
 
         </main>
@@ -608,6 +616,49 @@ function prevPage() {
 .price-value {
   font-weight: 600;
   color: #1f2937;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top: 1px solid #d1d5db;
+}
+
+.page-btn {
+  padding: 8px 20px;
+  border: 2px solid #1f2937;
+  background-color: white;
+  border-radius: 9999px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 16px;
+}
+
+.page-indicator {
+  padding: 4px 12px;
+  border: 1px solid #1f2937;
+  border-radius: 6px;
+  background: #fff;
 }
 
 @media (max-width: 768px) {
