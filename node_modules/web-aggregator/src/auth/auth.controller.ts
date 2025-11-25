@@ -11,7 +11,7 @@ import {
     Req,
     Res,
     UseGuards,
-    Param
+    Param, UseInterceptors
 } from '@nestjs/common';
 import {AuthService} from './services/auth.service';
 import type {Response, Request} from 'express';
@@ -26,6 +26,8 @@ import {RoleEnum} from "./enums";
 import  type {UpdateRoleRequest} from "./dto";
 import {RestUserService} from "./services/rest-user.service";
 import {ConfigService} from "@nestjs/config";
+import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.interceptor";
+import {UserInfoInterceptor} from "../common/interceptors/user-population-by-id.interceptor";
 
 @Controller('auth')
 export class AuthController {
@@ -59,9 +61,11 @@ export class AuthController {
         return await this.authService.logout(res);
     }
 
+
     @Authorization()
     @Get("@me")
     @HttpCode(HttpStatus.OK)
+    @UseInterceptors(UserInfoInterceptor)
     async me(@Authorized('id') id: string,) {
         return {id};
     }

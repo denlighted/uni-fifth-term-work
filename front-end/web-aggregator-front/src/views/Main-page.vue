@@ -5,8 +5,8 @@
       <div class="header-content">
         <h1 class="logo">LowPrice.com</h1>
         <div class="auth-buttons">
-          <button class="btn-auth">sign up</button>
-          <button class="btn-auth">sign in</button>
+          <button class="btn-auth" @click="goToRegister" >sign up</button>
+          <button class="btn-auth" @click="goToLogin">sign in</button>
         </div>
       </div>
     </header>
@@ -168,6 +168,7 @@
 import {ref, computed, onMounted} from 'vue'
 import {Search, MapPin} from 'lucide-vue-next'
 import {getAllUnitedProducts} from "@/api/pages/main-page-all-products.js";
+import router from "@/router/index.js";
 
 const products = ref([]);
 const currentImageIndex = ref({});
@@ -177,6 +178,10 @@ const paginatedProducts = ref([]);
 const currentPage = ref(1);
 const pageSize = ref(10);
 const totalPages = ref(1);
+
+
+const goToLogin = () => router.push('/auth/login')
+const goToRegister = () => router.push('/auth/register')
 
 
 onMounted(() => {
@@ -216,6 +221,7 @@ async function loadProducts() {
     console.error("Error loading pages", error);
   }
 }
+
 
 function updatePaginatedProducts() {
   const start = (currentPage.value - 1) * pageSize.value;

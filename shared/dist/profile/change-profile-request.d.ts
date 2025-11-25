@@ -1,0 +1,7 @@
+export interface ChangeProfileRequest {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    address?: string;
+    phoneNumber?: string;
+}

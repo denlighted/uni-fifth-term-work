@@ -24,6 +24,9 @@ import type{UpdateRoleRequest} from "../dto";
 import {User} from "@prisma/client";
 import {UpdateProfileRequest} from "../dto";
 import {JwtPayload} from "../interfaces";
+import { diskStorage } from 'multer';
+import multer from 'multer'
+import * as path from 'path';
 
 
 @Injectable()
@@ -31,6 +34,7 @@ export class AuthService {
 
     private readonly JWT_ACCESS_TOKEN_TTL: string;
     private readonly JWT_REFRESH_TOKEN_TTL: string;
+    private uploadDir = path.join(__dirname, '..', '..', 'uploads', 'avatars');
 
     private readonly COOKIE_DOMAIN: string;
 
@@ -131,7 +135,6 @@ export class AuthService {
 
     async refresh(req: Request, res: Response) {
         const refreshToken = req.cookies['refresh_token'];
-        console.log(refreshToken);
 
         if (!refreshToken) {
             throw new UnauthorizedException('Not valid refreshToken');
@@ -139,15 +142,16 @@ export class AuthService {
         const payLoad: JwtPayload = await this.jwtService.verifyAsync(refreshToken);
 
         const tokenRecord = await this.prismaService.token.findFirst({
-            where: { type: TokenType.REFRESH, userId: payLoad.sub },
+            where: { type: TokenType.REFRESH, userId: payLoad.sub,tokenHash: refreshToken },
         });
-        if (!tokenRecord || !(await verify(tokenRecord.tokenHash, refreshToken))) {
+
+        if (!tokenRecord) {
             throw new UnauthorizedException('Invalid refresh token');
         }
 
         if (payLoad) {
             const user = await this.prismaService.user.findUnique({
-                where: {id: payLoad.id},
+                where: {id: payLoad.sub},
                 select: {
                     id: true,
                     email: true,
@@ -176,13 +180,16 @@ export class AuthService {
     private async auth(res: Response, id: string, email: string, role: RoleEnum) {
         const {accessToken, refreshToken} = await this.generateTokens(id, email, role);
 
-        this.setCookie(res, refreshToken, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+        this.setCookie(res, refreshToken, 'refresh_token', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+
+        this.setCookie(res, accessToken,'access_token', new Date(Date.now() + 15 * 60 * 1000));
 
         return {accessToken};
     }
 
     async logout(res: Response) {
-        this.setCookie(res, 'refresh_token', new Date(0))
+        this.setCookie(res,'','refresh_token', new Date(0))
+        this.setCookie(res,'', 'access_token',new Date(0));
         return true;
     }
 
@@ -197,10 +204,15 @@ export class AuthService {
             {expiresIn: ms(this.JWT_REFRESH_TOKEN_TTL as StringValue) / 1000},
         );
 
+        await this.prismaService.token.deleteMany({
+            where: { userId: sub, type: TokenType.REFRESH },
+        });
+
+
         await this.prismaService.token.create({
             data: {
                 userId: sub,
-                tokenHash: await hash(refreshToken),
+                tokenHash: refreshToken,
                 type: TokenType.REFRESH,
                 expiresAt: new Date(
                     Date.now() + (ms(this.JWT_REFRESH_TOKEN_TTL as StringValue) ?? 0),
@@ -211,8 +223,8 @@ export class AuthService {
         return {accessToken, refreshToken};
     }
 
-    private setCookie(res: Response, value: string, expires: Date) {
-        res.cookie('refresh_token', value, {
+    private setCookie(res: Response, value: string,name:string, expires: Date) {
+        res.cookie(name, value, {
             httpOnly: true,
             expires,
             secure: !isDev(this.configService),
@@ -328,7 +340,11 @@ export class AuthService {
             throw new NotFoundException("User has not been found")
         }
 
-        const data = Object.fromEntries(Object.entries(dto).filter(([_,value])=>value!=undefined));
+        const data = Object.fromEntries(
+            Object.entries(dto)
+                .map(([key, value]) => [key, value === '' ? undefined : value])
+                .filter(([_, value]) => value !== undefined)
+        );
 
         if (Object.keys(data).length === 0) {
             throw new BadRequestException('No data provided for update');
@@ -339,6 +355,8 @@ export class AuthService {
         return { success: true, message: 'Updated successfully' };
 
     }
+
+
 
     async deleteMe(req:Request,res:Response){
         const currentUser = req.user as User;

@@ -52,12 +52,14 @@ import ForgotPasswordModal from './ForgotPasswordModal.vue'
 import {loginUser} from "@/api/auth/login.ts";
 import {useRouter} from "vue-router";
 import {googleAuth} from "@/api/auth/google-auth.js";
+import {useNotificationStore} from "@/components/notification.js";
+
 
 const loginForm = ref({ email: '', password: '' })
 const showForgotPasswordModal = ref(false,)
 const backendHost = 'http://localhost:3000';
 
-
+const notification =useNotificationStore();
 const router = useRouter(); // 2. Инициализируем его
 
 const handleLogin = async() => {
@@ -69,14 +71,14 @@ const handleLogin = async() => {
 
     const response = await loginUser(data)
     console.log('Login successful:', response.data);
-    alert("Login successful");
+    notification.show('Login successful', 'success')
     setTimeout(() => {
       router.push('/');
     }, 1500);
   }
   catch (error){
     console.error('Login failed:', error)
-    alert('Login error! Please check your details.')
+    notification.show('Login error! Please check your details.', 'error');
   }
 }
 

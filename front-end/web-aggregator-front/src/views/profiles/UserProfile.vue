@@ -1,192 +1,284 @@
 <template>
-  <div class="profile-container">
-    <div class="profile-wrapper">
-      <div class="profile-card">
-        <h2 class="profile-title">Профиль пользователя</h2>
-
-        <!-- Avatar Section -->
-        <div class="avatar-section">
-          <div class="avatar">
-            <svg v-if="!userProfile.avatar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-            <img v-else :src="userProfile.avatar" alt="Avatar" />
-          </div>
-          <button type="button" class="btn-change-avatar" @click="handleChangeAvatar">
-            Изменить фото
-          </button>
+  <div class="page-wrapper">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <span class="logo-text">LowPrice.com</span>
         </div>
+        <div class="header-center">
+        </div>
+        <div class="header-right">
+          <button class="btn-logout" @click="handleLogout">LOG OUT</button>
+          <div class="user-avatar">
+            <svg v-if="!userProfile.avatar" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M20 21a8 8 0 1 0-16 0"/>
+            </svg>
+            <img v-else :src="userProfile.avatar" alt="User" />
+          </div>
+          <span class="username">{{ userProfile.firstName }} {{ userProfile.lastName }}</span>
+        </div>
+      </div>
+    </header>
 
-        <!-- Profile Form -->
-        <form @submit.prevent="handleSaveProfile">
-          <div class="form-row">
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <nav class="sidebar-nav">
+          <a href="#" class="nav-item active" @click.prevent="activeTab = 'settings'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6m8.66-13.66l-4.24 4.24m-4.24 4.24L3.52 22.48M23 12h-6m-6 0H1m19.66 8.66l-4.24-4.24m-4.24-4.24L3.52 1.52"/>
+            </svg>
+            SETTINGS
+          </a>
+          <a href="#" class="nav-item" @click.prevent="activeTab = 'products'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18"/>
+            </svg>
+            MY PRODUCTS
+          </a>
+          <a href="#" class="nav-item" @click.prevent="activeTab = 'reviews'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            MY REVIEWS
+          </a>
+          <a href="#" class="nav-item" @click.prevent="activeTab = 'billing'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2"/>
+              <path d="M1 10h22"/>
+            </svg>
+            BILLING
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Content Area -->
+      <main class="content-area">
+        <!-- Account Settings Section -->
+        <section class="settings-section">
+          <h2 class="section-title">YOUR ACCOUNT SETTINGS</h2>
+
+          <form @submit.prevent="handleSaveSettings">
             <div class="form-group">
-              <label for="first-name">Имя</label>
+              <label for="email">Email</label>
+              <input
+                  type="email"
+                  id="name"
+                  v-model="userProfile.email"
+                  placeholder="Enter your Email"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="first-name">First name</label>
               <input
                   type="text"
                   id="first-name"
                   v-model="userProfile.firstName"
-                  :disabled="!isEditing"
-                  placeholder="Введите имя"
-                  required
+                  placeholder="Enter your first name"
+              />
+            </div>
+
+
+            <div class="form-group">
+              <label for="last-name">Last name</label>
+              <input
+                type="text"
+                id="last-name"
+                v-model="userProfile.lastName"
+                placeholder="Enter your last name"
+            />
+          </div>
+
+            <div class="form-group">
+              <label for="address">Address</label>
+              <input
+                  type="text"
+                  id="address"
+                  v-model="userProfile.address"
+                  placeholder="Enter your address"
               />
             </div>
 
             <div class="form-group">
-              <label for="last-name">Фамилия</label>
+              <label for="phone-number">Phone number</label>
               <input
                   type="text"
-                  id="last-name"
-                  v-model="userProfile.lastName"
-                  :disabled="!isEditing"
-                  placeholder="Введите фамилию"
-                  required
+                  id="phone-number"
+                  v-model="userProfile.phoneNumber"
+                  placeholder="Enter your phone number"
               />
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-                type="email"
-                id="email"
-                v-model="userProfile.email"
-                :disabled="!isEditing"
-                placeholder="Введите email"
-                required
-            />
-          </div>
+            <div class="avatar-upload">
+              <div class="avatar-preview">
+                <svg v-if="!userProfile.avatar" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="8" r="4"/>
+                  <path d="M20 21a8 8 0 1 0-16 0"/>
+                </svg>
+                <img v-else :src="userProfile.avatar" alt="Avatar" />
+              </div>
+              <input
+                  type="file"
+                  id="avatar-file"
+                  @change="handleAvatarChange"
+                  accept="image/*"
+                  hidden
+              />
+              <label for="avatar-file" class="file-label">Choose file/photo</label>
+            </div>
 
-          <div class="form-group">
-            <label for="phone">Телефон</label>
-            <input
-                type="tel"
-                id="phone"
-                v-model="userProfile.phone"
-                :disabled="!isEditing"
-                placeholder="+7 (___) ___-__-__"
-            />
-          </div>
+            <button type="submit" class="btn-save">SAVE SETTINGS</button>
+          </form>
+        </section>
 
-          <div class="form-group">
-            <label for="city">Город</label>
-            <input
-                type="text"
-                id="city"
-                v-model="userProfile.city"
-                :disabled="!isEditing"
-                placeholder="Введите город"
-            />
-          </div>
+        <!-- Password Change Section -->
+        <section class="settings-section">
+          <h2 class="section-title">PASSWORD CHANGE</h2>
 
-          <div class="form-group">
-            <label for="address">Адрес</label>
-            <input
-                type="text"
-                id="address"
-                v-model="userProfile.address"
-                :disabled="!isEditing"
-                placeholder="Введите адрес"
-            />
-          </div>
+          <form @submit.prevent="handleChangePassword">
+            <div class="form-group">
+              <label for="current-password">Current password</label>
+              <input
+                  type="password"
+                  id="current-password"
+                  v-model="passwordForm.oldPassword"
+                  placeholder="••••••••"
+              />
+            </div>
 
-          <div class="form-group">
-            <label for="birth-date">Дата рождения</label>
-            <input
-                type="date"
-                id="birth-date"
-                v-model="userProfile.birthDate"
-                :disabled="!isEditing"
-            />
-          </div>
+            <div class="form-group">
+              <label for="new-password">New password</label>
+              <input
+                  type="password"
+                  id="new-password"
+                  v-model="passwordForm.password"
+                  placeholder="••••••••"
+              />
+            </div>
 
-          <!-- Action Buttons -->
-          <div class="button-group" v-if="!isEditing">
-            <button type="button" class="btn btn-primary" @click="isEditing = true">
-              Редактировать профиль
+            <div class="form-group">
+              <label for="confirm-password">Confirm password</label>
+              <input
+                  type="password"
+                  id="confirm-password"
+                  v-model="passwordForm.passwordConfirm"
+                  placeholder="••••••••"
+                  :class="{ 'error': passwordForm.passwordConfirm && passwordForm.password !== passwordForm.passwordConfirm }"
+              />
+            </div>
+
+            <button type="submit" class="btn-save" :disabled="passwordForm.password !== passwordForm.passwordConfirm">
+              SAVE PASSWORD
             </button>
-            <button type="button" class="btn btn-secondary" @click="handleChangePassword">
-              Изменить пароль
-            </button>
-          </div>
-
-          <div class="button-group" v-else>
-            <button type="submit" class="btn btn-primary">
-              Сохранить изменения
-            </button>
-            <button type="button" class="btn btn-cancel" @click="handleCancel">
-              Отмена
-            </button>
-          </div>
-        </form>
-
-        <!-- Account Actions -->
-        <div class="account-actions">
-          <button type="button" class="btn-link btn-logout" @click="handleLogout">
-            Выйти из аккаунта
-          </button>
-          <button type="button" class="btn-link btn-delete" @click="handleDeleteAccount">
-            Удалить аккаунт
-          </button>
-        </div>
-      </div>
+          </form>
+        </section>
+      </main>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import {ref, reactive, onMounted} from 'vue'
+import {getUserProfile} from "@/api/profiles/user-profile.js";
+import {changeProfile} from "@/api/profiles/change-profile.js";
+import {changePassword} from "@/api/profiles/change-password.js";
+import {logout} from "@/api/auth/logout.js";
 
-const isEditing = ref(false)
+const activeTab = ref('settings')
+
+const user = ref({});
 
 const userProfile = reactive({
-  firstName: 'Иван',
-  lastName: 'Иванов',
-  email: 'ivan@example.com',
-  phone: '+7 (999) 123-45-67',
-  city: 'Москва',
-  address: 'ул. Примерная, д. 10',
-  birthDate: '1990-01-15',
-  avatar: null
+  email: '',
+  firstName: '',
+  lastName: '',
+  address: '',
+  phoneNumber: '',
+
 })
 
-// Сохраняем оригинальные данные для отмены изменений
-const originalProfile = { ...userProfile }
-
-const handleSaveProfile = () => {
-  console.log('Save profile:', userProfile)
-  isEditing.value = false
-  // Обновляем оригинальные данные после сохранения
-  Object.assign(originalProfile, userProfile)
-  // Здесь логика сохранения профиля
+const passwordForm = {
+  oldPassword: '',
+  password: '',
+  passwordConfirm: ''
 }
 
-const handleCancel = () => {
-  // Восстанавливаем оригинальные данные
-  Object.assign(userProfile, originalProfile)
-  isEditing.value = false
+onMounted(() => {
+  loadUser()
+})
+
+const loadUser = async () => {
+
+  try{
+    const response = await getUserProfile();
+    user.value = response.data;
+
+    userProfile.email = user.value.email || ""
+    userProfile.firstName = user.value.firstName || ""
+    userProfile.lastName = user.value.lastName || ""
+    userProfile.address = user.value.address || ""
+    userProfile.phoneNumber = user.value.phoneNumber || ""
+
+  }
+  catch (error){
+    console.error("Error loading users", error);
+  }
 }
 
-const handleChangeAvatar = () => {
-  console.log('Change avatar')
-  // Здесь логика изменения аватара (открытие file picker)
+
+const handleSaveSettings = async () => {
+  try{
+    const payload = Object.fromEntries(Object.entries(userProfile).filter(([_,value])=>value!==''));
+    const response = await changeProfile(payload)
+
+    await loadUser()
+
+  }
+  catch (error){
+    console.error("Failed to update profile:", error)
+  }
 }
 
-const handleChangePassword = () => {
-  console.log('Change password')
-  // Переход на страницу смены пароля или открытие модального окна
+const handleChangePassword = async () => {
+  if (passwordForm.password !== passwordForm.passwordConfirm) {
+    alert('Passwords do not match')
+    return
+  }
+  try{
+
+    const response = await changePassword(passwordForm);
+    passwordForm.oldPassword = ''
+    passwordForm.password = ''
+    passwordForm.passwordConfirm = ''
+  }
+  catch (error){
+    console.error("Failed to update password:", error)
+  }
 }
 
-const handleLogout = () => {
-  console.log('Logout')
-  // Здесь логика выхода из аккаунта
+const handleAvatarChange = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      userProfile.avatar = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
 }
 
-const handleDeleteAccount = () => {
-  if (confirm('Вы уверены, что хотите удалить аккаунт? Это действие необратимо.')) {
-    console.log('Delete account')
-    // Здесь логика удаления аккаунта
+const handleLogout = async () => {
+  try {
+    await logout()
+    window.location.href = "/auth/login"
+  } catch (e) {
+    console.error("Logout failed:", e)
   }
 }
 </script>
@@ -198,235 +290,331 @@ const handleDeleteAccount = () => {
   padding: 0;
 }
 
-.profile-container {
+.page-wrapper {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f5f5f5;
-  padding: 20px;
+  background-color: #f0f0f0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
 }
 
-.profile-wrapper {
-  width: 100%;
-  max-width: 600px;
+/* Header */
+.header {
+  background-color: #374151; /* Changed from #4a4a4a to match aggregator header */
+  color: white;
+  padding: 12px 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.profile-card {
-  background: white;
-  border-radius: 8px;
-  padding: 40px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.profile-title {
-  font-size: 28px;
-  font-weight: 600;
-  color: #2d2d2d;
-  margin-bottom: 30px;
-  text-align: center;
-}
-
-/* Avatar Section */
-.avatar-section {
+.header-content {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  margin-bottom: 32px;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.avatar {
-  width: 120px;
-  height: 120px;
+.header-left {
+  flex: 1;
+}
+
+.logo-text {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+
+
+.header-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.btn-logout {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  font-family: inherit;
+  padding: 8px 12px;
+  letter-spacing: 0.5px;
+}
+
+.btn-logout:hover {
+  opacity: 0.8;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: #f0f0f0;
+  background-color: #666;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
   overflow: hidden;
   color: #999;
-  border: 3px solid #e0e0e0;
 }
 
-.avatar svg {
-  width: 60px;
-  height: 60px;
+.user-avatar svg {
+  width: 20px;
+  height: 20px;
 }
 
-.avatar img {
+.user-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.btn-change-avatar {
-  background: none;
-  border: none;
-  color: #2d2d2d;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  font-family: inherit;
-  padding: 8px 16px;
+.username {
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.btn-change-avatar:hover {
-  opacity: 0.7;
+/* Main Content */
+.main-content {
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 56px);
+  padding-top: 20px; /* Added top padding for spacing between header and sidebar */
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background-color: #94A3B8;
+  padding: 0;
+  margin-left: 20px;
+  border-radius: 4px;
+  align-self: stretch;
+  margin-bottom: 40px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  color: #FFFFFF;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  padding: 40px 60px;
+  background-color: white;
+  margin: 0 40px 40px 20px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section {
+  margin-bottom: 48px;
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d2d2d; /* Changed from #5cb85c (green) to dark gray */
+  margin-bottom: 28px;
+  letter-spacing: 0.5px;
 }
 
 /* Form Styles */
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .form-group label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #2d2d2d;
+  color: #666;
   margin-bottom: 8px;
 }
 
 .form-group input {
   width: 100%;
+  max-width: 400px;
   padding: 12px 16px;
-  font-size: 15px;
-  border: 1px solid #d1d1d1;
-  border-radius: 6px;
+  font-size: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
   outline: none;
-  transition: border-color 0.2s, background-color 0.2s;
+  transition: border-color 0.2s;
   font-family: inherit;
+  background-color: #fafafa;
+  color: #666;
+}
+
+.form-group input:focus {
+  border-color: #2d2d2d; /* Changed from #5cb85c (green) to dark gray */
   background-color: white;
 }
 
-.form-group input:disabled {
-  background-color: #f9f9f9;
-  color: #666;
-  cursor: not-allowed;
-}
-
-.form-group input:not(:disabled):focus {
-  border-color: #2d2d2d;
+.form-group input.error {
+  border-color: #dc3545;
 }
 
 .form-group input::placeholder {
+  color: #aaa;
+}
+
+/* Avatar Upload */
+.avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.avatar-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   color: #999;
 }
 
-/* Button Styles */
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 24px;
+.avatar-preview svg {
+  width: 32px;
+  height: 32px;
 }
 
-.btn {
+.avatar-preview img {
   width: 100%;
-  padding: 14px;
-  font-size: 15px;
-  font-weight: 600;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  height: 100%;
+  object-fit: cover;
 }
 
-.btn-primary {
-  background-color: #2d2d2d;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #1a1a1a;
-}
-
-.btn-secondary {
-  background-color: white;
-  color: #2d2d2d;
-  border: 1px solid #d1d1d1;
-}
-
-.btn-secondary:hover {
-  background-color: #f9f9f9;
-}
-
-.btn-cancel {
-  background-color: #f0f0f0;
-  color: #2d2d2d;
-}
-
-.btn-cancel:hover {
-  background-color: #e0e0e0;
-}
-
-/* Account Actions */
-.account-actions {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #e0e0e0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
+.file-label {
+  font-size: 13px;
+  color: #2d2d2d; /* Changed from #5cb85c (green) to dark gray */
   cursor: pointer;
   transition: opacity 0.2s;
+  text-decoration: underline;
+}
+
+.file-label:hover {
+  opacity: 0.8;
+}
+
+/* Save Button */
+.btn-save {
+  background-color: #2d2d2d; /* Changed from #5cb85c (green) to dark gray */
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background-color 0.2s;
   font-family: inherit;
-  padding: 8px;
+  letter-spacing: 0.5px;
 }
 
-.btn-link:hover {
-  opacity: 0.7;
+.btn-save:hover:not(:disabled) {
+  background-color: #1a1a1a; /* Changed from #4cae4c (light green) to darker gray */
 }
 
-.btn-logout {
-  color: #2d2d2d;
-}
-
-.btn-delete {
-  color: #d32f2f;
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Responsive */
-@media (max-width: 600px) {
-  .profile-card {
+@media (max-width: 968px) {
+  .main-content {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .content-area {
+    margin: 20px;
     padding: 30px 24px;
   }
+}
 
-  .profile-title {
-    font-size: 24px;
+@media (max-width: 600px) {
+  .header-content {
+    padding: 0 12px;
   }
 
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 0;
+  .logo-text {
+    font-size: 12px;
   }
 
-  .avatar {
-    width: 100px;
-    height: 100px;
+  .username {
+    display: none;
   }
 
-  .avatar svg {
-    width: 50px;
-    height: 50px;
+  .content-area {
+    padding: 24px 20px;
+  }
+
+  .form-group input {
+    max-width: 100%;
   }
 }
 </style>
