@@ -24,8 +24,6 @@ import type{UpdateRoleRequest} from "../dto";
 import {User} from "@prisma/client";
 import {UpdateProfileRequest} from "../dto";
 import {JwtPayload} from "../interfaces";
-import { diskStorage } from 'multer';
-import multer from 'multer'
 import * as path from 'path';
 
 
@@ -356,7 +354,9 @@ export class AuthService {
 
     }
 
-
+    async updateAvatar(userId: string, avatarPath: string){
+        return this.prismaService.user.update({where:{id:userId},data:{pictureUrl:avatarPath}})
+    }
 
     async deleteMe(req:Request,res:Response){
         const currentUser = req.user as User;

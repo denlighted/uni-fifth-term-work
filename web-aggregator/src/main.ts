@@ -6,11 +6,18 @@ import {ConfigService} from "@nestjs/config";
 import path from "node:path";
 import type{NextFunction,Request,Response} from "express";
 import express from "express";
+import { dirname,join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import {fileURLToPath} from "node:url";
+
+
+
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
     const config = app.get(ConfigService);
 
+    const PROJECT_ROOT = process.cwd();
 
     app.use(cookieParser())
     app.setGlobalPrefix('api');
@@ -25,15 +32,21 @@ async function bootstrap() {
         origin: "http://localhost:5173",
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        exposeHeaders: ['Set-Cookie', 'Content-Disposition'],
+        exposedHeaders: ['Set-Cookie', 'Content-Disposition'],
         allowedHeaders: ['Authorization', 'X-Api-Key','Content-type'],
 
     })
 
-    app.use(express.static(path.join(__dirname, '..', 'public')));
+    app.use('/avatars', express.static(join(PROJECT_ROOT, 'uploads/avatars'),{
+        setHeaders: (res, path, stat) => {
+            res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+        }
+    }));
+
+    app.use(express.static(join(PROJECT_ROOT, 'public')));
 
     app.use((req: Request, res: Response, next: NextFunction) => {
-        if (req.originalUrl.startsWith('/api')) {
+        if (req.originalUrl.startsWith('/api')|| req.originalUrl.startsWith('/avatars')) {
             return next(); //
         }
         return res.sendFile(

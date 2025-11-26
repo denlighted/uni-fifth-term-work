@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import MainPage from "../views/Main-page.vue";
+import MainPage from "../views/pages/Main-page.vue";
 import LoginForm from "../views/auth/LoginForm.vue";
 import RegisterForm from "../views/auth/RegisterForm.vue";
 import ForgotPasswordModal from '@/views/auth/ForgotPasswordModal.vue';
@@ -7,6 +7,9 @@ import ResetPasswordForm from "../views/auth/ResetPasswordForm.vue";
 import UserProfile from "../views/profiles/UserProfile.vue";
 import NotFound from "../views/helpers/NotFound.vue";
 import api from "../api/axios";
+import ProductPage from "../views/pages/ProductPage.vue";
+import FavoritesPage from "../views/pages/FavoritesPage.vue";
+import CheapestBasket from "../views/pages/CheapestBasket.vue";
 
 
 
@@ -44,6 +47,22 @@ const routes = [
     name: 'user-profile',
     component: UserProfile,
     meta:{requiresAuth:true}
+    },
+
+    {
+        path:"/product",
+        name:"product-overview",
+        component:ProductPage
+    },
+    {
+        path:"/favorites",
+        name:"favorite-products",
+        component:FavoritesPage
+    },
+    {
+        path:"/cheapest-basket",
+        name:"cheapest-basket",
+        component:CheapestBasket
     },
 
     {

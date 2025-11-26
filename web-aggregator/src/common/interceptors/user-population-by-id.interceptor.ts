@@ -16,6 +16,7 @@ export class UserInfoInterceptor  implements NestInterceptor {
                     email: user.email,
                     firstName: user.firstName,
                     lastName: user.lastName,
+                    pictureUrl:user.pictureUrl,
                     address:user.address,
                     phoneNumber:user.phoneNumber
                 };

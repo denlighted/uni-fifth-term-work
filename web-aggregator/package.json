@@ -69,6 +69,7 @@
     "@types/jest": "^30.0.0",
     "@types/mongoose": "^5.11.97",
     "@types/ms": "^2.1.0",
+    "@types/multer": "^2.0.0",
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^7.0.3",
     "@types/passport-google-oauth20": "^2.0.17",

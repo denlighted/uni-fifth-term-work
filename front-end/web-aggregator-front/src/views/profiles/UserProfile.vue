@@ -4,7 +4,7 @@
     <header class="header">
       <div class="header-content">
         <div class="header-left">
-          <span class="logo-text">LowPrice.com</span>
+          <a href="/" class="logo-text" >LowPrice</a>
         </div>
         <div class="header-center">
         </div>
@@ -15,7 +15,7 @@
               <circle cx="12" cy="8" r="4"/>
               <path d="M20 21a8 8 0 1 0-16 0"/>
             </svg>
-            <img v-else :src="userProfile.avatar" alt="User" />
+            <img v-else :src="`http://localhost:3000${userProfile.avatar}`" alt="Avatar" />
           </div>
           <span class="username">{{ userProfile.firstName }} {{ userProfile.lastName }}</span>
         </div>
@@ -121,7 +121,7 @@
                   <circle cx="12" cy="8" r="4"/>
                   <path d="M20 21a8 8 0 1 0-16 0"/>
                 </svg>
-                <img v-else :src="userProfile.avatar" alt="Avatar" />
+                <img v-else :src="`http://localhost:3000${userProfile.avatar}`" alt="Avatar" />
               </div>
               <input
                   type="file"
@@ -189,16 +189,21 @@ import {getUserProfile} from "@/api/profiles/user-profile.js";
 import {changeProfile} from "@/api/profiles/change-profile.js";
 import {changePassword} from "@/api/profiles/change-password.js";
 import {logout} from "@/api/auth/logout.js";
+import {changeAvatar} from "@/api/profiles/change-avatar.js";
+import {useNotificationStore} from "@/components/notification.js";
 
 const activeTab = ref('settings')
 
 const user = ref({});
+
+const notification =useNotificationStore();
 
 const userProfile = reactive({
   email: '',
   firstName: '',
   lastName: '',
   address: '',
+  avatar:'',
   phoneNumber: '',
 
 })
@@ -223,6 +228,7 @@ const loadUser = async () => {
     userProfile.firstName = user.value.firstName || ""
     userProfile.lastName = user.value.lastName || ""
     userProfile.address = user.value.address || ""
+    userProfile.avatar = user.value.pictureUrl||""
     userProfile.phoneNumber = user.value.phoneNumber || ""
 
   }
@@ -234,7 +240,7 @@ const loadUser = async () => {
 
 const handleSaveSettings = async () => {
   try{
-    const payload = Object.fromEntries(Object.entries(userProfile).filter(([_,value])=>value!==''));
+    const payload = Object.fromEntries(Object.entries(userProfile).filter(([key,value])=>value!==''&&key!=='avatar'));
     const response = await changeProfile(payload)
 
     await loadUser()
@@ -247,7 +253,7 @@ const handleSaveSettings = async () => {
 
 const handleChangePassword = async () => {
   if (passwordForm.password !== passwordForm.passwordConfirm) {
-    alert('Passwords do not match')
+    notification.show("Error, passwords do not match","error");
     return
   }
   try{
@@ -256,20 +262,31 @@ const handleChangePassword = async () => {
     passwordForm.oldPassword = ''
     passwordForm.password = ''
     passwordForm.passwordConfirm = ''
+
+    notification.show("Success, password has been uploaded","success");
   }
   catch (error){
+    notification.show("Error, password has not been changed","error");
     console.error("Failed to update password:", error)
   }
 }
 
-const handleAvatarChange = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      userProfile.avatar = e.target.result
-    }
-    reader.readAsDataURL(file)
+const handleAvatarChange = async (event) => {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+  try{
+    const response = await changeAvatar(file);
+
+    notification.show("success, avatar has been uploaded","success");
+    window.location.reload();
+  }
+  catch (error){
+    notification.show("Error, avatar has not been uploaded","error");
+    console.log(error);
+  }
+  finally {
+    event.target.value = '';
   }
 }
 
@@ -320,7 +337,9 @@ const handleLogout = async () => {
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  color:white;
+  text-decoration:none
 }
 
 .header-center {
@@ -380,7 +399,7 @@ const handleLogout = async () => {
 }
 
 .username {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
 }
 

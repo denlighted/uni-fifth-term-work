@@ -11,7 +11,7 @@ import {
     Req,
     Res,
     UseGuards,
-    Param, UseInterceptors
+    Param, UseInterceptors, UploadedFile, BadRequestException
 } from '@nestjs/common';
 import {AuthService} from './services/auth.service';
 import type {Response, Request} from 'express';
@@ -28,6 +28,11 @@ import {RestUserService} from "./services/rest-user.service";
 import {ConfigService} from "@nestjs/config";
 import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.interceptor";
 import {UserInfoInterceptor} from "../common/interceptors/user-population-by-id.interceptor";
+import {FileInterceptor} from "@nestjs/platform-express";
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import {User} from "@prisma/client";
+import type { Multer } from 'multer';
 
 @Controller('auth')
 export class AuthController {
@@ -101,6 +106,27 @@ export class AuthController {
     @Authorization()
     async changeProfile(@Req() req:Request, @Body()dto: UpdateProfileRequest) {
         return this.authService.changeMe(req,dto);
+    }
+
+    @Authorization()
+    @Post('avatar')
+    @UseInterceptors(FileInterceptor('avatar',{
+        storage:diskStorage({
+            destination:'./uploads/avatars',
+            filename:(req,file,cb)=>{
+                const ext = extname(file.originalname);
+                const currentUser = req.user as User
+                const fileName =`${currentUser.id}_${Date.now()}${ext}`;
+                cb(null, fileName);
+            }
+        }),
+    }))
+    async uploadAvatar(@UploadedFile() file:Express.Multer.File, @Req() req:Request){
+        const currentUser = req.user as User;
+        if (!file) {
+            throw new BadRequestException("Avatar file is required");
+        }
+        return this.authService.updateAvatar(currentUser.id, `/avatars/${file.filename}`);
     }
 
     @Delete("delete-me")
