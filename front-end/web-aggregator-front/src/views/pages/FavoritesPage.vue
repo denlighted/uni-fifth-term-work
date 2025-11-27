@@ -5,8 +5,12 @@
       <div class="header-content">
         <h1 class="logo">LowPrice.com</h1>
         <div class="auth-buttons">
-          <button class="btn-auth">sign out</button>
+          <button class="btn-logout" @click="handleLogout">LOG OUT</button>
+          <a v-if="user" href="/profile" class="user-name">
+            Hello, {{ user.firstName }}
+          </a>
         </div>
+
       </div>
     </header>
 
@@ -66,16 +70,30 @@
 
         <div class="favorites-grid">
           <div
-              v-for="product in sortedFavorites"
+              v-for="product in favoriteProducts"
               :key="product.id"
               class="favorite-card"
           >
             <div class="product-image">
-              <div class="image-placeholder">
-                <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-                  <circle cx="45" cy="35" r="12" fill="currentColor"/>
-                  <path d="M20 100 L40 70 L60 85 L100 40" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                </svg>
+              <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
+              <transition name="fade" mode="out-in">
+                <img
+                    v-if="product.images && product.images.length"
+                    :key="currentImageIndex[product.id]"
+                    :src="product.images[currentImageIndex[product.id]]"
+                    alt="Product Image"
+                    class="image"
+                />
+              </transition>
+              <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
+              <!-- Dots -->
+              <div class="dots" v-if="product.images && product.images.length > 1">
+              <span
+                  v-for="(img, index) in product.images"
+                  :key="index"
+                  :class="['dot', { active: currentImageIndex[product.id] === index }]"
+                  @click="goToImage(product.id, index)"
+              ></span>
               </div>
             </div>
             <div class="product-info">
@@ -83,7 +101,7 @@
             </div>
             <div class="product-actions">
               <button
-                  @click="removeFromFavorites(product.id)"
+                  @click.stop="removeFromFavorites(product.unitedProduct._id)"
                   class="action-button remove-button"
                   title="Remove from favorites"
               >
@@ -110,52 +128,94 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import {ref, computed, onMounted} from 'vue'
 import { Search, MapPin, X, Star } from 'lucide-vue-next'
+import {favoriteProducts as getFavoriteProducts} from "@/api/pages/favorite-products.js";
+import {getUserProfile} from "@/api/profiles/user-profile.js";
+import {logout} from "@/api/auth/logout.js";
+import {deleteOrAddToFavorite} from "@/api/pages/delete-favorite.js";
 
 const sortOrder = ref('date')
 
-const favorites = ref([
-  {
-    id: 1,
-    name: 'Product 1',
-    dateAdded: new Date('2024-01-15'),
-    price: 30.49
-  },
-  {
-    id: 2,
-    name: 'Product 2',
-    dateAdded: new Date('2024-01-20'),
-    price: 29.99
-  },
-  {
-    id: 3,
-    name: 'Product 3',
-    dateAdded: new Date('2024-01-25'),
-    price: 34.49
+let favorites = ref([])
+const currentImageIndex = ref({});
+const user = ref(null)
+
+
+onMounted(async () => {
+  await  loadFavorites();
+  await  getUser()
+});
+
+async function loadFavorites(){
+  try{
+    const response = await getFavoriteProducts();
+
+    favorites.value = response.data.map(fav=>{
+      currentImageIndex.value[fav._id] = 0;
+      return{
+        id: fav._id,
+        name: fav.unitedProduct.name,
+        brand: fav.unitedProduct.brand,
+        sources: fav.unitedProduct.sources,
+        images: fav.unitedProduct.sources.map(s => s.imageLink),
+        minPrice: fav.unitedProduct.minPrice,
+        maxPrice: fav.unitedProduct.maxPrice,
+        unitedProduct: fav.unitedProduct
+      }
+    });
+
   }
-])
-
-const sortedFavorites = computed(() => {
-  const sorted = [...favorites.value]
-
-  if (sortOrder.value === 'date') {
-    sorted.sort((a, b) => b.dateAdded - a.dateAdded)
-  } else if (sortOrder.value === 'name') {
-    sorted.sort((a, b) => a.name.localeCompare(b.name))
-  } else if (sortOrder.value === 'price') {
-    sorted.sort((a, b) => a.price - b.price)
-  }
-
-  return sorted
-})
-
-const removeFromFavorites = (id) => {
-  const index = favorites.value.findIndex(p => p.id === id)
-  if (index !== -1) {
-    favorites.value.splice(index, 1)
+  catch(error){
+    console.error(error);
   }
 }
+
+async function removeFromFavorites(productId){
+  try{
+    await deleteOrAddToFavorite({productId});
+    const index = favorites.value.findIndex(p =>p.id ===productId)
+    if (index !== -1) favorites.value.splice(index, 1);
+    await loadFavorites();
+  }
+  catch (error){
+    console.log("Something goes wrong", error);
+  }
+}
+
+function nextImage(productId) {
+  const p = favorites.value.find(p => p.id === productId);
+  currentImageIndex.value[productId] =
+      (currentImageIndex.value[productId] + 1) % p.images.length;
+}
+
+function prevImage(productId) {
+  const p = favorites.value.find(p => p.id === productId);
+  currentImageIndex.value[productId] =
+      (currentImageIndex.value[productId] - 1 + p.images.length) % p.images.length;
+}
+
+function goToImage(productId, index) {
+  currentImageIndex.value[productId] = index;
+}
+
+const favoriteProducts = computed(() => favorites.value)
+
+
+async function getUser(){
+  const response = await getUserProfile()
+  user.value = response.data
+}
+
+const handleLogout = async () => {
+  try {
+    await logout()
+    window.location.href = "/auth/login"
+  } catch (e) {
+    console.error("Logout failed:", e)
+  }
+}
+
 </script>
 
 <style scoped>
@@ -354,27 +414,48 @@ const removeFromFavorites = (id) => {
   overflow: hidden;
   transition: box-shadow 0.2s;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 300px; /* ниже, чем было */
+  max-width: 220px; /* уже */
+  margin: 0 auto; /* чтобы центрировалось внутри сетки */
 }
+
+
+
+
 
 .favorite-card:hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .product-image {
-  aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
+  height: 55%;
   background-color: #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
+
+
+.product-image .image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 
 .image-placeholder {
   color: #d1d5db;
 }
 
 .product-info {
-  padding: 16px;
+  flex: 1 1 auto; /* занимает оставшееся место */
+  padding: 12px; /* чуть меньше, чем было 16px */
   text-align: center;
+  overflow: hidden;
 }
 
 .product-name {
@@ -406,6 +487,17 @@ const removeFromFavorites = (id) => {
   transform: scale(1.1);
 }
 
+.user-name {
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 4px
+}
+
+.user-name:hover {
+  color: orange;      /* при наведении */
+}
+
 .remove-button {
   color: #ef4444;
 }
@@ -417,6 +509,23 @@ const removeFromFavorites = (id) => {
 .favorite-button.active {
   color: #fbbf24;
 }
+
+.btn-logout {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  font-family: inherit;
+  padding: 8px 12px;
+  letter-spacing: 0.5px;
+}
+
+.btn-logout:hover {
+   opacity: 0.8;
+ }
 
 /* Empty State */
 .empty-state {
@@ -441,4 +550,21 @@ const removeFromFavorites = (id) => {
   color: #6b7280;
   margin: 0;
 }
+
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.4);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 4px;
+  z-index: 10;
+}
+
+.nav-btn.left { left: 4px; }
+.nav-btn.right { right: 4px; }
 </style>

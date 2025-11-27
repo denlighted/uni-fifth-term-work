@@ -32,7 +32,6 @@ export class AuthService {
 
     private readonly JWT_ACCESS_TOKEN_TTL: string;
     private readonly JWT_REFRESH_TOKEN_TTL: string;
-    private uploadDir = path.join(__dirname, '..', '..', 'uploads', 'avatars');
 
     private readonly COOKIE_DOMAIN: string;
 
@@ -137,32 +136,43 @@ export class AuthService {
         if (!refreshToken) {
             throw new UnauthorizedException('Not valid refreshToken');
         }
+
         const payLoad: JwtPayload = await this.jwtService.verifyAsync(refreshToken);
 
         const tokenRecord = await this.prismaService.token.findFirst({
-            where: { type: TokenType.REFRESH, userId: payLoad.sub,tokenHash: refreshToken },
+            where: {
+                type: TokenType.REFRESH,
+                userId: payLoad.sub,
+                tokenHash: refreshToken
+            },
         });
+
 
         if (!tokenRecord) {
             throw new UnauthorizedException('Invalid refresh token');
         }
 
-        if (payLoad) {
-            const user = await this.prismaService.user.findUnique({
-                where: {id: payLoad.sub},
-                select: {
-                    id: true,
-                    email: true,
-                    role: true
-                }
-            });
+        const user = await this.prismaService.user.findUnique({
+            where: { id: payLoad.sub },
+            select: { id: true, email: true, role: true },
+        });
 
-            if (!user) {
-                throw new NotFoundException("User has not been found");
-            }
-
-            return this.auth(res, user.id, user.email, user.role as RoleEnum);
+        if (!user) {
+            throw new NotFoundException("User not found");
         }
+
+        const accessToken = this.jwtService.sign(
+            { sub: user.id, email: user.email, role: user.role },
+            { expiresIn: ms(this.JWT_ACCESS_TOKEN_TTL as StringValue) / 1000 }
+        );
+        this.setCookie(
+            res,
+            accessToken,
+            "access_token",
+            new Date(Date.now() + 15 * 60 * 1000)
+        );
+
+        return { accessToken };
     }
 
 
@@ -201,11 +211,6 @@ export class AuthService {
         const refreshToken = this.jwtService.sign({...payLoad, type: TokenType.REFRESH},
             {expiresIn: ms(this.JWT_REFRESH_TOKEN_TTL as StringValue) / 1000},
         );
-
-        await this.prismaService.token.deleteMany({
-            where: { userId: sub, type: TokenType.REFRESH },
-        });
-
 
         await this.prismaService.token.create({
             data: {

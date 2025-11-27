@@ -7,7 +7,7 @@ import ResetPasswordForm from "../views/auth/ResetPasswordForm.vue";
 import UserProfile from "../views/profiles/UserProfile.vue";
 import NotFound from "../views/helpers/NotFound.vue";
 import api from "../api/axios";
-import ProductPage from "../views/pages/ProductPage.vue";
+import ProductPage from "../views/profiles/ProductProfile.vue";
 import FavoritesPage from "../views/pages/FavoritesPage.vue";
 import CheapestBasket from "../views/pages/CheapestBasket.vue";
 
@@ -57,12 +57,14 @@ const routes = [
     {
         path:"/favorites",
         name:"favorite-products",
-        component:FavoritesPage
+        component:FavoritesPage,
+        meta:{requiresAuth:true}
     },
     {
         path:"/cheapest-basket",
         name:"cheapest-basket",
-        component:CheapestBasket
+        component:CheapestBasket,
+        meta:{requiresAuth:true}
     },
 
     {
@@ -82,14 +84,8 @@ router.beforeEach(async(to, from, next) => {
     if(!to.meta.requiresAuth){
         return next()
     }
-    try{
-        await api.get("/auth/@me")
-        next();
-    }
-    catch (error){
-        console.warn("Not authorized")
-        next('/auth/login') // редирект на логин
-    }
+    await api.get("/auth/@me").then(() => next()).catch(() => next());
+
 });
 
 export default router;

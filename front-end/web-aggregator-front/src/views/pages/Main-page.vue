@@ -308,11 +308,6 @@ async function getUser(){
   color: orange;      /* при наведении */
 }
 
-.user-name:visited {
-  color: purple;      /* после клика */
-}
-
-
 
 .btn-auth {
   padding: 6px 16px;

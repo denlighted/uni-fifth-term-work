@@ -1,26 +1,20 @@
 <template>
-  <div class="alert-demo">
-    <h2>Custom Alert Demo</h2>
-    <!-- Custom Alert Component -->
-    <transition name="alert-fade">
-      <div class="alert-overlay" v-if="alertVisible" @click="closeAlert">
-        <transition name="alert-slide">
-          <div class="alert-box" v-if="alertVisible" @click.stop>
-            <div class="alert-icon" :class="`alert-${alertType}`">
-              <!-- svg как у тебя -->
-            </div>
-            <div class="alert-content">
-              <p class="alert-message">{{ alertMessage }}</p>
-            </div>
-            <button class="alert-close" @click="closeAlert">×</button>
-            <div class="alert-actions">
-              <button class="btn btn-primary" @click="closeAlert">OK</button>
-            </div>
+  <transition name="alert-fade">
+    <div class="alert-overlay" v-if="alertVisible" @click="closeAlert">
+      <transition name="alert-slide">
+        <div class="alert-box" @click.stop>
+          <div class="alert-icon" :class="`alert-${alertType}`"></div>
+          <div class="alert-content">
+            <p class="alert-message">{{ alertMessage }}</p>
           </div>
-        </transition>
-      </div>
-    </transition>
-  </div>
+          <button class="alert-close" @click="closeAlert">×</button>
+          <div class="alert-actions">
+            <button class="btn btn-primary" @click="closeAlert">OK</button>
+          </div>
+        </div>
+      </transition>
+    </div>
+  </transition>
 </template>
 
 <script setup>
@@ -62,12 +56,7 @@ const closeAlert = () => {
   margin-bottom: 30px;
 }
 
-.demo-buttons {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+
 
 .demo-buttons button {
   padding: 12px 24px;

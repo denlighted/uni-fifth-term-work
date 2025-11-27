@@ -3,7 +3,7 @@ import {InjectModel} from "@nestjs/mongoose";
 import {UnitedProducts} from "../products/schemas";
 import {Model} from "mongoose";
 import {FavoriteProducts} from "./schemas/favorite-products.schema";
-import {FavoriteActionRequest} from "./dto/favorite-action.dto";
+import {FavoriteActionRequest} from "./dto";
 
 @Injectable()
 export class FavoritesService {
@@ -37,7 +37,17 @@ export class FavoritesService {
 
     async getUserFavorites(userId:string){
 
-        return this.favoriteProducts.find({ userId }).populate("unitedProduct",{__v:0, _id:0}).lean();
+        return this.favoriteProducts
+            .find({ userId })
+            .populate({
+                path: "unitedProduct",
+                select: "-__v",
+                populate: {
+                    path: "sources",
+                    select: "-__v -_id"
+                }
+            })
+            .lean();
     }
 
     async isFavorite(userId:string,productId:string):Promise<boolean>{

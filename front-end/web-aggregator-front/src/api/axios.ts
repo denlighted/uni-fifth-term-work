@@ -11,7 +11,7 @@ api.interceptors.response.use(
     async error => {
         const originalRequest = error.config;
 
-        if (error.response.status === 401 && !originalRequest._retry && originalRequest.url === '/') {
+        if (error.response.status === 401 && !originalRequest._retry ) {
             if (!isRefreshing) {
                 isRefreshing = true;
                 originalRequest._retry = true;
@@ -20,7 +20,7 @@ api.interceptors.response.use(
                     return api.request(originalRequest);
                 } catch (error) {
                     isRefreshing = false;
-                    window.location.href = "/auth/login";
+                    //window.location.href = "/auth/login";
                     return Promise.reject(error);
                 }
 

@@ -1,7 +1,7 @@
 import {Body, Controller, Get, HttpCode, Post, Req, Res, Param, UseInterceptors} from '@nestjs/common';
 import { FavoritesService } from './favorites.service';
 import {Authorization} from "../auth/decorators";
-import {FavoriteActionRequest} from "./dto/favorite-action.dto";
+import {FavoriteActionRequest} from "./dto";
 import  type {Request} from "express";
 import {User} from "@prisma/client";
 import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.interceptor";

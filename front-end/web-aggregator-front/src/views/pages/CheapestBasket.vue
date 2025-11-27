@@ -62,11 +62,25 @@
                 class="basket-card"
             >
               <div class="product-image">
-                <div class="image-placeholder">
-                  <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-                    <circle cx="45" cy="35" r="12" fill="currentColor"/>
-                    <path d="M20 100 L40 70 L60 85 L100 40" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                  </svg>
+                <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
+                <transition name="fade" mode="out-in">
+                  <img
+                      v-if="product.images && product.images.length"
+                      :key="currentImageIndex[product.id]"
+                      :src="product.images[currentImageIndex[product.id]]"
+                      alt="Product Image"
+                      class="image"
+                  />
+                </transition>
+                <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
+                <!-- Dots -->
+                <div class="dots" v-if="product.images && product.images.length > 1">
+              <span
+                  v-for="(img, index) in product.images"
+                  :key="index"
+                  :class="['dot', { active: currentImageIndex[product.id] === index }]"
+                  @click="goToImage(product.id, index)"
+              ></span>
                 </div>
               </div>
 
@@ -74,12 +88,12 @@
                 <h3 class="product-name">{{ product.name }}</h3>
                 <div class="product-prices">
                   <div
-                      v-for="price in product.prices"
-                      :key="price.store"
+                      v-for="prod in product.sources"
+                      :key="prod.store"
                       class="price-row"
                   >
-                    <span class="price-store">{{ price.store }}</span>
-                    <span class="price-value">{{ price.value }}</span>
+                    <span class="price-store">{{ prod.store }}</span>
+                    <span class="price-value">{{ prod.price }}</span>
                   </div>
                 </div>
 
@@ -104,7 +118,7 @@
 
             <div class="total-price">
               <span class="total-label">Lowest total price:</span>
-              <span class="total-value">{{ lowestStore }} - {{ totalPrice }}</span>
+              <span class="total-value">Собака - Лось</span>
             </div>
           </div>
         </div>
@@ -114,82 +128,61 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import {ref, computed, onMounted} from 'vue'
 import { Search, MapPin, ShoppingCart, Star, Plus } from 'lucide-vue-next'
+import {bestCartProducts} from "@/api/pages/best-cart.js";
 
-const basketProducts = ref([
-  {
-    id: 1,
-    name: 'Product 1',
-    isFavorite: false,
-    prices: [
-      { store: 'Store 1', value: '49.99' },
-      { store: 'Store 2', value: '50.89' },
-      { store: 'Store 3', value: '51.49' }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Product 2',
-    isFavorite: false,
-    prices: [
-      { store: 'Store 1', value: '49.99' },
-      { store: 'Store 2', value: '50.89' },
-      { store: 'Store 3', value: '51.49' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Product 3',
-    isFavorite: false,
-    prices: [
-      { store: 'Store 1', value: '49.99' },
-      { store: 'Store 2', value: '50.89' },
-      { store: 'Store 3', value: '51.49' }
-    ]
+const basketProducts = ref([]);
+const currentImageIndex = ref({});
+
+onMounted(async ()=>{
+  await loadBasket();
+})
+
+async function loadBasket() {
+  try {
+    const response = await bestCartProducts(); // вызываем нужный запрос
+
+    basketProducts.value = response.data.map(cart => {
+      currentImageIndex.value[cart._id] = 0;
+
+      return {
+        id: cart._id,
+        productId: cart.unitedProduct._id,
+        name: cart.unitedProduct.name,
+        brand: cart.unitedProduct.brand,
+        sources: cart.unitedProduct.sources,
+        images: cart.unitedProduct.sources.map(s => s.imageLink),
+        quantity: cart.quantity
+      };
+    });
+
+  } catch (error) {
+    console.log("Something goes wrong", error);
   }
-])
+}
 
-const lowestStore = computed(() => {
-  const storeTotals = {}
+function nextImage(productId) {
+  const p = basketProducts.value.find(p => p.id === productId);
+  currentImageIndex.value[productId] =
+      (currentImageIndex.value[productId] + 1) % p.images.length;
+}
 
-  basketProducts.value.forEach(product => {
-    product.prices.forEach(price => {
-      if (!storeTotals[price.store]) {
-        storeTotals[price.store] = 0
-      }
-      storeTotals[price.store] += parseFloat(price.value)
-    })
-  })
+function prevImage(productId) {
+  const p = basketProducts.value.find(p => p.id === productId);
+  currentImageIndex.value[productId] =
+      (currentImageIndex.value[productId] - 1 + p.images.length) % p.images.length;
+}
 
-  let lowestStoreName = ''
-  let lowestTotal = Infinity
+function goToImage(productId, index) {
+  currentImageIndex.value[productId] = index;
+}
 
-  Object.entries(storeTotals).forEach(([store, total]) => {
-    if (total < lowestTotal) {
-      lowestTotal = total
-      lowestStoreName = store
-    }
-  })
+// const lowestStore = computed(() => {}
 
-  return lowestStoreName
-})
 
-const totalPrice = computed(() => {
-  const storeTotals = {}
+// const totalPrice = computed(() => {}
 
-  basketProducts.value.forEach(product => {
-    product.prices.forEach(price => {
-      if (!storeTotals[price.store]) {
-        storeTotals[price.store] = 0
-      }
-      storeTotals[price.store] += parseFloat(price.value)
-    })
-  })
-
-  const lowest = Math.min(...Object.values(storeTotals))
-  return lowest.toFixed(2)
-})
 
 const removeFromBasket = (productId) => {
   basketProducts.value = basketProducts.value.filter(p => p.id !== productId)
@@ -372,24 +365,39 @@ const toggleFavorite = (productId) => {
 }
 
 .basket-card {
-  background-color: white;
-  border-radius: 8px;
-  border: 2px solid #1f2937;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
   overflow: hidden;
-  transition: box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 260px;
 }
+
+
 
 .basket-card:hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .product-image {
-  aspect-ratio: 1 / 1;
-  background-color: #e5e7eb;
+  position: relative;
+  height: 180px;
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
+
+
+.product-image .image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 
 .image-placeholder {
   color: #d1d5db;
@@ -403,10 +411,14 @@ const toggleFavorite = (productId) => {
 }
 
 .product-name {
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   color: #1f2937;
-  margin: 0 0 12px 0;
-  font-size: 16px;
+  margin: 5px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-prices {
@@ -436,7 +448,6 @@ const toggleFavorite = (productId) => {
 .product-actions {
   display: flex;
   gap: 8px;
-  margin-top: auto;
   align-items: center;
 }
 
@@ -445,7 +456,6 @@ const toggleFavorite = (productId) => {
   border: none;
   cursor: pointer;
   padding: 4px;
-  transition: transform 0.2s;
   display: flex;
   align-items: center;
 }
@@ -510,6 +520,23 @@ const toggleFavorite = (productId) => {
 .total-value {
   font-weight: 700;
 }
+
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.4);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 4px;
+  z-index: 10;
+}
+
+.nav-btn.left { left: 4px; }
+.nav-btn.right { right: 4px; }
 
 @media (max-width: 640px) {
   .basket-footer {
