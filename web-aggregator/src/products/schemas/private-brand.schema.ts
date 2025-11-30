@@ -10,7 +10,7 @@ export class PrivateBrands extends Document{
     @Prop({ required: [true,"Private brand must belong to a store"]})
     store: string
 
-    @Prop({nullable:true})
+    @Prop({default:null})
     reason?: string;
 }
 

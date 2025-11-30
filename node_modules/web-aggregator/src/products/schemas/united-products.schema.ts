@@ -20,7 +20,7 @@
         @Prop({required: [true,"Product got to have a brand"],maxlength:100})
         brand:string
 
-        @Prop({required: [true,"Product got to have a category"],})
+        @Prop({required: [true,"Product got to have a a normalized name"],})
         normalizedName:string // Normalized name for search ????
 
         @Prop({required: [true,"Product got to have a slug for Url"],})

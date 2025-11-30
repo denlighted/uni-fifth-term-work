@@ -10,117 +10,154 @@
             Hello, {{ user.firstName }}
           </a>
         </div>
-
       </div>
     </header>
 
     <!-- Main Content -->
-    <div class="main-container">
-      <!-- Search Section -->
-      <div class="search-section">
-        <div class="search-header">
-          <h2 class="section-title">Price Aggregator</h2>
-          <div class="city-selector">
-            <MapPin :size="20" />
-            <span class="city-label">City</span>
+    <div class="main-content">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <nav class="sidebar-nav">
+          <a href="#" class="nav-item" @click.prevent="router.push('/profile')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6m8.66-13.66l-4.24 4.24m-4.24 4.24L3.52 22.48M23 12h-6m-6 0H1m19.66 8.66l-4.24-4.24m-4.24-4.24L3.52 1.52"/>
+            </svg>
+            SETTINGS
+          </a>
+          <a href="#" class="nav-item" @click.prevent="router.push('/cheapest-basket')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18"/>
+            </svg>
+            MY PRODUCT CART
+          </a>
+          <a href="#" class="nav-item" @click.prevent="activeTab = 'reviews'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            MY REVIEWS
+          </a>
+          <a href="#" class="nav-item active" @click.prevent="activeTab='favorites'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2"/>
+              <path d="M1 10h22"/>
+            </svg>
+            FAVORITES
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Wrapped content in content-area -->
+      <div class="content-area">
+        <!-- Search Section -->
+        <div class="search-section">
+          <div class="search-header">
+            <h2 class="section-title">Price Aggregator</h2>
+            <div class="city-selector-dropdown">
+              <MapPin :size="20" />
+              <select v-model="selectedCity" class="city-select">
+                <option value="Kyiv">Kyiv</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="search-inputs">
+            <div class="input-wrapper">
+              <Search class="input-icon" :size="18" />
+              <input
+                  type="text"
+                  placeholder="Choose a store"
+                  class="search-input"
+              />
+            </div>
+            <div class="input-wrapper">
+              <Search class="input-icon" :size="18" />
+              <input
+                  type="text"
+                  placeholder="Select a category"
+                  class="search-input"
+              />
+            </div>
+            <div class="input-wrapper">
+              <Search class="input-icon" :size="18" />
+              <input
+                  type="text"
+                  placeholder="Search for a product or barcode"
+                  class="search-input"
+              />
+            </div>
           </div>
         </div>
 
-        <div class="search-inputs">
-          <div class="input-wrapper">
-            <Search class="input-icon" :size="18" />
-            <input
-                type="text"
-                placeholder="Choose a store"
-                class="search-input"
-            />
+        <!-- Favorites Section -->
+        <div class="favorites-section">
+          <div class="favorites-header">
+            <h2 class="favorites-title">Favorite products</h2>
+            <select
+                v-model="sortOrder"
+                class="sort-select"
+            >
+              <option value="date">Date added</option>
+              <option value="name">Product name</option>
+              <option value="price">Price</option>
+            </select>
           </div>
-          <div class="input-wrapper">
-            <Search class="input-icon" :size="18" />
-            <input
-                type="text"
-                placeholder="Select a category"
-                class="search-input"
-            />
-          </div>
-          <div class="input-wrapper">
-            <Search class="input-icon" :size="18" />
-            <input
-                type="text"
-                placeholder="Search for a product or barcode"
-                class="search-input"
-            />
-          </div>
-        </div>
-      </div>
 
-      <!-- Favorites Section -->
-      <div class="favorites-section">
-        <div class="favorites-header">
-          <h2 class="favorites-title">Favorite products</h2>
-          <select
-              v-model="sortOrder"
-              class="sort-select"
-          >
-            <option value="date">Date added</option>
-            <option value="name">Product name</option>
-            <option value="price">Price</option>
-          </select>
-        </div>
-
-        <div class="favorites-grid">
-          <div
-              v-for="product in favoriteProducts"
-              :key="product.id"
-              class="favorite-card"
-          >
-            <div class="product-image">
-              <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
-              <transition name="fade" mode="out-in">
-                <img
-                    v-if="product.images && product.images.length"
-                    :key="currentImageIndex[product.id]"
-                    :src="product.images[currentImageIndex[product.id]]"
-                    alt="Product Image"
-                    class="image"
-                />
-              </transition>
-              <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
-              <!-- Dots -->
-              <div class="dots" v-if="product.images && product.images.length > 1">
-              <span
-                  v-for="(img, index) in product.images"
-                  :key="index"
-                  :class="['dot', { active: currentImageIndex[product.id] === index }]"
-                  @click="goToImage(product.id, index)"
-              ></span>
+          <div class="favorites-grid">
+            <div
+                v-for="product in favoriteProducts"
+                :key="product.id"
+                class="favorite-card"
+            >
+              <div class="product-image">
+                <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
+                <transition name="fade" mode="out-in">
+                  <img
+                      v-if="product.images && product.images.length"
+                      :key="currentImageIndex[product.id]"
+                      :src="product.images[currentImageIndex[product.id]]"
+                      alt="Product Image"
+                      class="image"
+                  />
+                </transition>
+                <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
+                <!-- Dots -->
+                <div class="dots" v-if="product.images && product.images.length > 1">
+                <span
+                    v-for="(img, index) in product.images"
+                    :key="index"
+                    :class="['dot', { active: currentImageIndex[product.id] === index }]"
+                    @click="goToImage(product.id, index)"
+                ></span>
+                </div>
+              </div>
+              <div class="product-info">
+                <h3 class="product-name">{{ product.name }}</h3>
+              </div>
+              <div class="product-actions">
+                <button
+                    @click.stop="removeFromOrAddFavorites(product.unitedProduct._id)"
+                    class="action-button remove-button"
+                    title="Remove from favorites"
+                >
+                  <X :size="20" />
+                </button>
+                <button
+                    class="action-button favorite-button active"
+                    title="In favorites"
+                >
+                  <Star :size="20" fill="currentColor" />
+                </button>
               </div>
             </div>
-            <div class="product-info">
-              <h3 class="product-name">{{ product.name }}</h3>
-            </div>
-            <div class="product-actions">
-              <button
-                  @click.stop="removeFromFavorites(product.unitedProduct._id)"
-                  class="action-button remove-button"
-                  title="Remove from favorites"
-              >
-                <X :size="20" />
-              </button>
-              <button
-                  class="action-button favorite-button active"
-                  title="In favorites"
-              >
-                <Star :size="20" fill="currentColor" />
-              </button>
-            </div>
           </div>
-        </div>
 
-        <div v-if="favorites.length === 0" class="empty-state">
-          <Star :size="64" class="empty-icon" />
-          <p class="empty-text">No favorite products yet</p>
-          <p class="empty-subtext">Add products to your favorites to see them here</p>
+          <div v-if="favorites.length === 0" class="empty-state">
+            <Star :size="64" class="empty-icon" />
+            <p class="empty-text">No favorite products yet</p>
+            <p class="empty-subtext">Add products to your favorites to see them here</p>
+          </div>
         </div>
       </div>
     </div>
@@ -134,8 +171,11 @@ import {favoriteProducts as getFavoriteProducts} from "@/api/pages/favorite-prod
 import {getUserProfile} from "@/api/profiles/user-profile.js";
 import {logout} from "@/api/auth/logout.js";
 import {deleteOrAddToFavorite} from "@/api/pages/delete-favorite.js";
+import router from "@/router/index.js";
 
 const sortOrder = ref('date')
+const activeTab = ref('settings')
+const selectedCity = ref('Kyiv')
 
 let favorites = ref([])
 const currentImageIndex = ref({});
@@ -171,7 +211,7 @@ async function loadFavorites(){
   }
 }
 
-async function removeFromFavorites(productId){
+async function removeFromOrAddFavorites(productId){
   try{
     await deleteOrAddToFavorite({productId});
     const index = favorites.value.findIndex(p =>p.id ===productId)
@@ -270,11 +310,98 @@ const handleLogout = async () => {
   background-color: #4b5563;
 }
 
-/* Main Container */
+/* Main Content */
+.main-content {
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 56px);
+  padding-top: 20px;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background-color: #2d2d2d;
+  padding: 0;
+  margin-left: 20px;
+  border-radius: 4px;
+  align-self: stretch;
+  margin-bottom: 40px;
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  padding: 0 40px 40px 20px;
+}
+
+.city-selector-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+}
+
+.city-select {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.city-select:hover {
+  border-color: #9ca3af;
+}
+
+.city-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Main Container - removed old padding */
 .main-container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 24px;
 }
 
 /* Search Section */
@@ -421,10 +548,6 @@ const handleLogout = async () => {
   margin: 0 auto; /* чтобы центрировалось внутри сетки */
 }
 
-
-
-
-
 .favorite-card:hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
@@ -439,13 +562,11 @@ const handleLogout = async () => {
   overflow: hidden;
 }
 
-
 .product-image .image {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
-
 
 .image-placeholder {
   color: #d1d5db;
@@ -491,11 +612,11 @@ const handleLogout = async () => {
   color: white;
   text-decoration: none;
   display: inline-block;
-  margin-top: 4px
+  margin-top: 4px;
 }
 
 .user-name:hover {
-  color: orange;      /* при наведении */
+  color: orange;
 }
 
 .remove-button {
@@ -524,8 +645,8 @@ const handleLogout = async () => {
 }
 
 .btn-logout:hover {
-   opacity: 0.8;
- }
+  opacity: 0.8;
+}
 
 /* Empty State */
 .empty-state {
@@ -567,4 +688,32 @@ const handleLogout = async () => {
 
 .nav-btn.left { left: 4px; }
 .nav-btn.right { right: 4px; }
+
+/* Responsive */
+@media (max-width: 968px) {
+  .main-content {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .content-area {
+    padding: 20px;
+  }
+}
 </style>

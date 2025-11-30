@@ -25,7 +25,7 @@ export class BestCartController {
     return await this.bestCartService.isCarted(currentUser.id,dto);
   }
 
-  @Get("best-cart")
+  @Get("cheapest-shop")
   @Authorization()
   async calculateBestBasket(@Req() req:Request){
     const currentUser = req.user as User;

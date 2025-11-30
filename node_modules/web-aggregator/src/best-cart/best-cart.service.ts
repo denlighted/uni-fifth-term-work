@@ -76,13 +76,16 @@ export class BestCartService {
 
         const bestStore = atbSum < foraSum ? "ATБ" : "Fora";
         const bestPrice = atbSum < foraSum ? atbSum : foraSum;
+        const worstStore = atbSum < foraSum ? "Fora" : "AТБ";
+        const worstPrice = atbSum < foraSum ? foraSum : atbSum;
 
         return {
             atbSum,
             foraSum,
             bestStore,
             bestPrice,
-            message: `Most profitable shop for your cart is ${bestStore} (${bestPrice.toFixed(2)})`
+            message:`Most profitable shop for your cart is ${bestStore} (${bestPrice.toFixed(2)} uah)`,
+            secondVar:`The price at ${worstStore} is ${worstPrice.toFixed(2)} uah `
         };
     }
 

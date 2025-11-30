@@ -34,12 +34,12 @@
             </svg>
             SETTINGS
           </a>
-          <a href="#" class="nav-item" @click.prevent="activeTab = 'products'">
+          <a href="#" class="nav-item" @click.prevent="router.push('/cheapest-basket')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2"/>
               <path d="M9 3v18"/>
             </svg>
-            MY PRODUCTS
+            MY PRODUCT CART
           </a>
           <a href="#" class="nav-item" @click.prevent="activeTab = 'reviews'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -47,12 +47,12 @@
             </svg>
             MY REVIEWS
           </a>
-          <a href="#" class="nav-item" @click.prevent="activeTab = 'billing'">
+          <a href="#" class="nav-item" @click.prevent="router.push('/favorites')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="1" y="4" width="22" height="16" rx="2"/>
               <path d="M1 10h22"/>
             </svg>
-            BILLING
+            FAVORITES
           </a>
         </nav>
       </aside>
@@ -183,7 +183,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup >
 import {ref, reactive, onMounted} from 'vue'
 import {getUserProfile} from "@/api/profiles/user-profile.js";
 import {changeProfile} from "@/api/profiles/change-profile.js";
@@ -191,10 +191,13 @@ import {changePassword} from "@/api/profiles/change-password.js";
 import {logout} from "@/api/auth/logout.js";
 import {changeAvatar} from "@/api/profiles/change-avatar.js";
 import {useNotificationStore} from "@/components/notification.js";
+import { useRouter } from 'vue-router';
 
 const activeTab = ref('settings')
 
 const user = ref({});
+
+const router = useRouter();
 
 const notification =useNotificationStore();
 
@@ -415,7 +418,7 @@ const handleLogout = async () => {
 /* Sidebar */
 .sidebar {
   width: 240px;
-  background-color: #94A3B8;
+  background-color: rgba(0, 0, 0, 0.82);
   padding: 0;
   margin-left: 20px;
   border-radius: 4px;

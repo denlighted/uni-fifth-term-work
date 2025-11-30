@@ -5,120 +5,158 @@
       <div class="header-content">
         <h1 class="logo">LowPrice.com</h1>
         <div class="auth-buttons">
-          <button class="btn-auth">sign out</button>
+          <button class="btn-logout" @click="handleLogout">LOG OUT</button>
+          <a href="/profile" class="user-name">Hello, {{ user.firstName }}</a>
         </div>
       </div>
     </header>
 
-    <!-- Main Content -->
-    <div class="main-container">
-      <!-- Search Section -->
-      <div class="search-section">
-        <div class="search-header">
-          <h2 class="section-title">Price Aggregator</h2>
-          <div class="city-selector">
-            <MapPin :size="20" />
-            <span class="city-label">City</span>
-          </div>
-        </div>
+    <!-- Added main content wrapper with sidebar -->
+    <div class="main-content">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <nav class="sidebar-nav">
+          <a href="#" class="nav-item" @click.prevent="router.push('/profile')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6m8.66-13.66l-4.24 4.24m-4.24 4.24L3.52 22.48M23 12h-6m-6 0H1m19.66 8.66l-4.24-4.24m-4.24-4.24L3.52 1.52"/>
+            </svg>
+            SETTINGS
+          </a>
+          <a href="#" class="nav-item active" @click.prevent="activeTab = 'product-cart'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18"/>
+            </svg>
+            MY PRODUCT CART
+          </a>
+          <a href="#" class="nav-item" @click.prevent="activeTab = 'reviews'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            MY REVIEWS
+          </a>
+          <a href="#" class="nav-item " @click.prevent="router.push('/favorites')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2"/>
+              <path d="M1 10h22"/>
+            </svg>
+            FAVORITES
+          </a>
+        </nav>
+      </aside>
 
-        <div class="search-inputs">
-          <div class="input-wrapper">
-            <Search class="input-icon" :size="18" />
-            <input
-                type="text"
-                placeholder="Choose a store"
-                class="search-input"
-            />
-          </div>
-          <div class="input-wrapper">
-            <Search class="input-icon" :size="18" />
-            <input
-                type="text"
-                placeholder="Select a category"
-                class="search-input"
-            />
-          </div>
-          <div class="input-wrapper">
-            <Search class="input-icon" :size="18" />
-            <input
-                type="text"
-                placeholder="Search for a product or barcode"
-                class="search-input"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Basket Section -->
-      <div class="basket-wrapper">
-        <h2 class="basket-title">Cheapest Basket</h2>
-
-        <div class="basket-content">
-          <div class="basket-products">
-            <div
-                v-for="product in basketProducts"
-                :key="product.id"
-                class="basket-card"
-            >
-              <div class="product-image">
-                <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
-                <transition name="fade" mode="out-in">
-                  <img
-                      v-if="product.images && product.images.length"
-                      :key="currentImageIndex[product.id]"
-                      :src="product.images[currentImageIndex[product.id]]"
-                      alt="Product Image"
-                      class="image"
-                  />
-                </transition>
-                <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
-                <!-- Dots -->
-                <div class="dots" v-if="product.images && product.images.length > 1">
-              <span
-                  v-for="(img, index) in product.images"
-                  :key="index"
-                  :class="['dot', { active: currentImageIndex[product.id] === index }]"
-                  @click="goToImage(product.id, index)"
-              ></span>
-                </div>
-              </div>
-
-              <div class="product-details">
-                <h3 class="product-name">{{ product.name }}</h3>
-                <div class="product-prices">
-                  <div
-                      v-for="prod in product.sources"
-                      :key="prod.store"
-                      class="price-row"
-                  >
-                    <span class="price-store">{{ prod.store }}</span>
-                    <span class="price-value">{{ prod.price }}</span>
-                  </div>
-                </div>
-
-                <!-- Moved actions to bottom left with horizontal layout -->
-                <div class="product-actions">
-                  <button @click="removeFromBasket(product.id)" class="action-btn basket-icon" title="Remove from basket">
-                    <ShoppingCart :size="20" />
-                  </button>
-                  <button @click="toggleFavorite(product.id)" class="action-btn star-btn" :class="{ active: product.isFavorite }" title="Toggle favorite">
-                    <Star :size="20" :fill="product.isFavorite ? '#fbbf24' : 'none'" />
-                  </button>
-                </div>
-              </div>
+      <!-- Content Area -->
+      <div class="content-wrapper">
+        <!-- Search Section -->
+        <div class="search-section">
+          <div class="search-header">
+            <h2 class="section-title">Price Aggregator</h2>
+            <div class="city-selector-dropdown">
+              <MapPin :size="20" />
+              <select v-model="selectedCity" class="city-select">
+                <option value="Kyiv">Kyiv</option>
+              </select>
             </div>
           </div>
 
-          <div class="basket-footer">
-            <button class="add-product-btn">
-              <Plus :size="20" />
-              Add another product
-            </button>
+          <div class="search-inputs">
+            <div class="input-wrapper">
+              <Search class="input-icon" :size="18" />
+              <input
+                  type="text"
+                  placeholder="Choose a store"
+                  class="search-input"
+              />
+            </div>
+            <div class="input-wrapper">
+              <Search class="input-icon" :size="18" />
+              <input
+                  type="text"
+                  placeholder="Select a category"
+                  class="search-input"
+              />
+            </div>
+            <div class="input-wrapper">
+              <Search class="input-icon" :size="18" />
+              <input
+                  type="text"
+                  placeholder="Search for a product or barcode"
+                  class="search-input"
+              />
+            </div>
+          </div>
+        </div>
 
-            <div class="total-price">
-              <span class="total-label">Lowest total price:</span>
-              <span class="total-value">Собака - Лось</span>
+        <!-- Basket Section -->
+        <div class="basket-wrapper">
+          <h2 class="basket-title">Cheapest Basket</h2>
+
+          <div class="basket-content">
+            <div class="basket-products">
+              <div
+                  v-for="product in basketProducts"
+                  :key="product.id"
+                  class="basket-card"
+              >
+                <div class="product-image">
+                  <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
+                  <transition name="fade" mode="out-in">
+                    <img
+                        v-if="product.images && product.images.length"
+                        :key="currentImageIndex[product.id]"
+                        :src="product.images[currentImageIndex[product.id]]"
+                        alt="Product Image"
+                        class="image"
+                    />
+                  </transition>
+                  <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
+                  <!-- Dots -->
+                  <div class="dots" v-if="product.images && product.images.length > 1">
+                    <span
+                        v-for="(img, index) in product.images"
+                        :key="index"
+                        :class="['dot', { active: currentImageIndex[product.id] === index }]"
+                        @click="goToImage(product.id, index)"
+                    ></span>
+                  </div>
+                </div>
+
+                <div class="product-details">
+                  <h3 class="product-name">{{ product.name }}</h3>
+                  <div class="product-prices">
+                    <div
+                        v-for="prod in product.sources"
+                        :key="prod.store"
+                        class="price-row"
+                    >
+                      <span class="price-store">{{ prod.store }}</span>
+                      <span class="price-value">{{ prod.price }}</span>
+                    </div>
+                  </div>
+
+                  <div class="product-actions">
+                    <button @click="removeFromBasket(product.id)" class="action-btn basket-icon" title="Remove from basket">
+                      <ShoppingCart :size="20" />
+                    </button>
+                    <button @click="toggleFavorite(product.id)" class="action-btn star-btn" :class="{ active: product.isFavorite }" title="Toggle favorite">
+                      <Star :size="20" :fill="product.isFavorite ? '#fbbf24' : 'none'" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="basket-footer">
+              <button class="add-product-btn" @click="goHome">
+                <Plus :size="20" />
+                Add another product
+              </button>
+
+              <div class="total-price">
+                <span class="total-label main-text">{{ cheapest.message }}</span>
+                <span class="total-label sub-text">{{ cheapest.worstMessage }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -131,17 +169,32 @@
 import {ref, computed, onMounted} from 'vue'
 import { Search, MapPin, ShoppingCart, Star, Plus } from 'lucide-vue-next'
 import {bestCartProducts} from "@/api/pages/best-cart.js";
+import {getCheapestShop} from "@/api/pages/cheapest-shop.js";
+import router from "@/router/index.js";
+import {getUserProfile} from "@/api/profiles/user-profile.js";
+import {logout} from "@/api/auth/logout.js";
+import {deleteOrAddToFavorite} from "@/api/pages/delete-favorite.js";
 
+const activeTab = ref('settings')
 const basketProducts = ref([]);
 const currentImageIndex = ref({});
+const cheapest = ref({
+  message:'',
+  worstMessage:''
+});
+const user= ref({})
+const selectedCity = ref('Kyiv')
 
 onMounted(async ()=>{
   await loadBasket();
+  await cheapestShop()
+  await  getUser()
+
 })
 
 async function loadBasket() {
   try {
-    const response = await bestCartProducts(); // вызываем нужный запрос
+    const response = await bestCartProducts();
 
     basketProducts.value = response.data.map(cart => {
       currentImageIndex.value[cart._id] = 0;
@@ -162,6 +215,18 @@ async function loadBasket() {
   }
 }
 
+async function removeFromCart(productId){
+  try{
+    await deleteOrAddToFavorite({productId});
+    const index = favorites.value.findIndex(p =>p.id ===productId)
+    if (index !== -1) favorites.value.splice(index, 1);
+    await loadFavorites();
+  }
+  catch (error){
+    console.log("Something goes wrong", error);
+  }
+}
+
 function nextImage(productId) {
   const p = basketProducts.value.find(p => p.id === productId);
   currentImageIndex.value[productId] =
@@ -178,20 +243,43 @@ function goToImage(productId, index) {
   currentImageIndex.value[productId] = index;
 }
 
-// const lowestStore = computed(() => {}
+function goHome() {
+  router.push('/')
+}
 
+async function cheapestShop(){
+  try{
+    const response = await getCheapestShop();
+    cheapest.value.message = response.data.message
+    cheapest.value.worstMessage = response.data.secondVar
 
-// const totalPrice = computed(() => {}
-
+  }
+  catch(error){
+    console.log(error)
+  }
+}
 
 const removeFromBasket = (productId) => {
   basketProducts.value = basketProducts.value.filter(p => p.id !== productId)
+}
+
+async function getUser(){
+  const response = await getUserProfile()
+  user.value = response.data
 }
 
 const toggleFavorite = (productId) => {
   const product = basketProducts.value.find(p => p.id === productId)
   if (product) {
     product.isFavorite = !product.isFavorite
+  }
+}
+const handleLogout = async () => {
+  try {
+    await logout()
+    window.location.href = "/auth/login"
+  } catch (e) {
+    console.error("Logout failed:", e)
   }
 }
 </script>
@@ -247,11 +335,100 @@ const toggleFavorite = (productId) => {
   background-color: #4b5563;
 }
 
-/* Main Container */
-.main-container {
-  max-width: 1280px;
+/* Main Content with Sidebar Layout */
+.main-content {
+  display: flex;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 24px;
+  padding-top: 20px;
+  gap: 20px;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 240px;
+  background-color: #2d2d2d;
+  margin-left: 20px;
+  border-radius: 8px;
+  align-self: stretch;
+  position: sticky;
+  top: 20px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-item:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.nav-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.nav-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.city-selector-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+}
+
+.city-select {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.city-select:hover {
+  border-color: #9ca3af;
+}
+
+.city-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Content Wrapper for main content area */
+.content-wrapper {
+  flex: 1;
+  padding: 0 24px 24px 0;
 }
 
 /* Search Section */
@@ -375,8 +552,6 @@ const toggleFavorite = (productId) => {
   max-width: 260px;
 }
 
-
-
 .basket-card:hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
@@ -391,13 +566,11 @@ const toggleFavorite = (productId) => {
   overflow: hidden;
 }
 
-
 .product-image .image {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
-
 
 .image-placeholder {
   color: #d1d5db;
@@ -405,7 +578,6 @@ const toggleFavorite = (productId) => {
 
 .product-details {
   padding: 16px;
-  /* Added flex to push actions to bottom */
   display: flex;
   flex-direction: column;
 }
@@ -444,11 +616,27 @@ const toggleFavorite = (productId) => {
   color: #1f2937;
 }
 
-/* Updated actions layout to horizontal at bottom left */
 .product-actions {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.btn-logout {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  font-family: inherit;
+  padding: 8px 12px;
+  letter-spacing: 0.5px;
+}
+
+.btn-logout:hover {
+  opacity: 0.8;
 }
 
 .action-btn {
@@ -464,7 +652,6 @@ const toggleFavorite = (productId) => {
   transform: scale(1.1);
 }
 
-/* Made basket icon dark instead of red */
 .basket-icon {
   color: #1f2937;
 }
@@ -475,6 +662,16 @@ const toggleFavorite = (productId) => {
 
 .star-btn.active {
   color: #fbbf24;
+}
+
+.user-name {
+  color: white;
+  text-decoration: none;
+  margin-top: 5px;
+}
+
+.user-name:hover {
+  color: orange;      /* при наведении */
 }
 
 /* Basket Footer */
@@ -508,9 +705,20 @@ const toggleFavorite = (productId) => {
 }
 
 .total-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.main-text {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+}
+
+.sub-text {
+  font-size: 14px;
+  margin-top: 4px;
+  color: #666;
 }
 
 .total-label {
@@ -537,6 +745,43 @@ const toggleFavorite = (productId) => {
 
 .nav-btn.left { left: 4px; }
 .nav-btn.right { right: 4px; }
+
+/* Responsive adjustments for sidebar */
+@media (max-width: 968px) {
+  .main-content {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    margin-left: 0;
+    margin: 0 20px;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-item:first-child {
+    border-radius: 8px 0 0 8px;
+  }
+
+  .nav-item:last-child {
+    border-radius: 0 8px 8px 0;
+    border-right: none;
+  }
+
+  .content-wrapper {
+    padding: 0 20px 24px 20px;
+  }
+}
 
 @media (max-width: 640px) {
   .basket-footer {

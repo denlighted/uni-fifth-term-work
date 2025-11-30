@@ -23,9 +23,11 @@
       <div class="search-section">
         <div class="search-header">
           <h2 class="section-title">Price Aggregator</h2>
-          <div class="city-selector">
-            <MapPin :size="20"/>
-            <span class="city-label">City</span>
+          <div class="city-selector-dropdown">
+            <MapPin :size="20" />
+            <select v-model="selectedCity" class="city-select">
+              <option value="Kyiv">Kyiv</option>
+            </select>
           </div>
         </div>
 
@@ -188,6 +190,7 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const totalPages = ref(1);
 
+const selectedCity = ref('Kyiv')
 
 const goToLogin = () => router.push('/auth/login')
 const goToRegister = () => router.push('/auth/register')
@@ -532,6 +535,35 @@ async function getUser(){
   .products-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+.city-selector-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+}
+
+.city-select {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.city-select:hover {
+  border-color: #9ca3af;
+}
+
+.city-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .product-card {
