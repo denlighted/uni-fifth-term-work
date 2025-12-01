@@ -10,9 +10,6 @@ import api from "../api/axios";
 import ProductPage from "../views/profiles/ProductProfile.vue";
 import FavoritesPage from "../views/pages/FavoritesPage.vue";
 import CheapestBasket from "../views/pages/CheapestBasket.vue";
-import FavoritesTest from "../views/pages/FavoritesTest.vue";
-
-
 
 
 const routes = [
@@ -51,11 +48,6 @@ const routes = [
     },
 
     {
-        path:"/product",
-        name:"product-overview",
-        component:ProductPage
-    },
-    {
         path:"/favorites",
         name:"favorite-products",
         component:FavoritesPage,
@@ -66,6 +58,12 @@ const routes = [
         name:"cheapest-basket",
         component:CheapestBasket,
         meta:{requiresAuth:true}
+    },
+
+    {
+        path:"/products/profile/:slug",
+        name:"product-profile",
+        component:ProductPage
     },
 
     {

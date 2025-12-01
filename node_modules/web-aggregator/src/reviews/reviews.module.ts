@@ -20,7 +20,7 @@ import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.
     inject: [ConfigService],
   }),
       MongooseModule.forFeature([
-        {name:Review.name, schema: ReviewSchema},
+          { name: Review.name, schema: ReviewSchema },
       ]),
       PrismaModule,
       ProductsModule,

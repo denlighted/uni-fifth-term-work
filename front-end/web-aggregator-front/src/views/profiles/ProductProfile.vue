@@ -51,29 +51,43 @@
     <!-- Product Section -->
     <div class="content-container">
       <div class="product-section">
-        <h1 class="product-heading">Product</h1>
+        <h1 class="product-heading">{{product.name}}</h1>
 
         <div class="product-layout">
           <!-- Product Image -->
           <div class="product-image-container">
             <div class="product-image">
-              <svg viewBox="0 0 400 300" class="placeholder-svg">
-                <rect width="400" height="300" fill="#e0e0e0"/>
-                <circle cx="160" cy="100" r="30" fill="#fff"/>
-                <path d="M100 200 L160 140 L220 180 L300 120" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+              <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
+              <transition name="fade" mode="out-in">
+                <img
+                    v-if="product.images && product.images.length"
+                    :key="currentImageIndex[product.id]"
+                    :src="product.images[currentImageIndex[product.id]]"
+                    class="image"
+                />
+              </transition>
+              <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
+              <!-- Dots -->
+              <div class="dots" v-if="product.images && product.images.length > 1">
+                <span
+                    v-for="(img, index) in product.images"
+                    :key="index"
+                    :class="['dot', { active: currentImageIndex[product.id] === index }]"
+                    @click="goToImage(product.id, index)"
+                ></span>
+              </div>
             </div>
           </div>
 
           <!-- Price List -->
           <div class="price-section">
             <div class="price-range">
-              {{ minPrice }} - {{ maxPrice }} in {{ stores.length }} stores
+              {{ product.minPrice }} - {{ product.maxPrice }} in {{ product.sources.length }} stores
             </div>
             <div class="store-prices">
-              <div v-for="store in stores" :key="store.id" class="store-price-item">
-                <div class="store-name">{{ store.name }}</div>
-                <div class="store-price">{{ store.price }}</div>
+              <div v-for="prod in product.sources" :key="prod._id" class="store-price-item">
+                <div class="store-name">{{ prod.store }}</div>
+                <div class="store-price">{{ prod.price }}</div>
               </div>
             </div>
           </div>
@@ -295,11 +309,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import {onMounted, ref} from 'vue'
+import {getProductBySlug} from "@/api/profiles/product-profile.js";
+import {useRoute} from "vue-router";
 
 const selectedStore = ref('')
 const selectedCategory = ref('')
 const searchQuery = ref('')
+
+let product = ref({
+  name: "",
+  minPrice: 0,
+  maxPrice: 0,
+  sources: []
+})
 
 const stores = ref([
   { id: 1, name: 'Store 1', price: '49.99' },
@@ -326,6 +349,11 @@ const overallRating = ref('4.5')
 const sortBy = ref('date')
 const commentName = ref('')
 const commentText = ref('')
+
+const currentImageIndex = ref([]);
+
+const route = useRoute()
+const slug = route.params.slug;
 
 const userReviews = ref([
   {
@@ -365,6 +393,43 @@ const userReviews = ref([
     dislikes: 3
   }
 ])
+
+onMounted(async () => {
+  await getProduct()
+})
+
+async function getProduct(){
+  try{
+      const response = await getProductBySlug(slug);
+
+      product.value = response.data;
+
+      product.value.images = response.data.sources.map(s => s.imageLink);
+
+      currentImageIndex.value[product.value.id] = 0;
+  }
+  catch (error)
+  {
+    console.log(error);
+  }
+}
+
+function nextImage(productId) {
+  const p = product.value;
+  currentImageIndex.value[productId] =
+      (currentImageIndex.value[productId] + 1) % p.images.length;
+}
+
+function prevImage(productId) {
+  const p = product.value;
+  currentImageIndex.value[productId] =
+      (currentImageIndex.value[productId] - 1 + p.images.length) % p.images.length;
+}
+
+function goToImage(productId, index) {
+  currentImageIndex.value[productId] = index;
+}
+
 
 const goToSignUp = () => {
   console.log('Navigate to sign up')
@@ -547,6 +612,31 @@ const formatDate = (dateStr) => {
   padding: 0 20px 40px;
 }
 
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.4);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 4px;
+  z-index: 10;
+}
+
+.nav-btn.left {
+  left: 10px;
+}
+
+.nav-btn.right {
+  right: 10px;
+}
+
+
+
+
 /* Product Section */
 .product-section {
   background-color: white;
@@ -575,12 +665,20 @@ const formatDate = (dateStr) => {
 }
 
 .product-image {
+  position: relative;
   width: 100%;
-  max-width: 400px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  height: 320px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   overflow: hidden;
-  background-color: #f9f9f9;
+}
+
+.product-image .image {
+  max-height: 100%;
+  width: auto;
+  object-fit: contain;
+  margin-left: -35px; /* ← регулируешь насколько надо */
 }
 
 .placeholder-svg {

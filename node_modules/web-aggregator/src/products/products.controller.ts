@@ -47,7 +47,7 @@ export class ProductsController {
         return this.restProductService.getAllUnitedProducts(query);
     }
 
-    @Get('slug/:slug')
+    @Get('profile/:slug')
     async getUnitedProductBySlug(@Param('slug') slug: string) {
         return this.restProductService.getUnitedProductBySlug(slug);
     }

@@ -14,7 +14,6 @@ import {ReviewRequest} from "./dto";
 @Injectable()
 export class ReviewsService {
      constructor(private readonly prismaService: PrismaService,
-                 @InjectModel(UnitedProducts.name) private unitedProducts:Model<UnitedProducts>,
                  @InjectModel(Review.name) private reviews:Model<Review>,
                  private readonly restProductService: RestProductService
                  ) {
@@ -86,5 +85,18 @@ export class ReviewsService {
          return reviewFromDb;
 
      }
+
+     async getReviewForProductBySlug(slug:string){
+         const product = await this.restProductService.getUnitedProductBySlug(slug);
+         if (!product) {
+             return []; // или throw new NotFoundException('Product not found')
+         }
+         console.log(product._id);
+
+         const reviews = await this.reviews.find({unitedProduct:product._id});
+         return reviews;
+     }
+
+
 
 }

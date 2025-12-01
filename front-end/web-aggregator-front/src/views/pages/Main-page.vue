@@ -109,6 +109,7 @@
             <div
                 v-for="product in paginatedProducts" :key="product.id"
                 class="product-card"
+                @click="goToProduct(product.slug)"
             >
               <!-- Image carousel -->
               <div class="product-image">
@@ -178,6 +179,7 @@ import {Search, MapPin} from 'lucide-vue-next'
 import {getAllUnitedProducts} from "@/api/pages/main-page-all-products.ts";
 import router from "@/router/index.ts";
 import {getUserProfile} from "@/api/profiles/user-profile.ts";
+import {useRouter} from "vue-router";
 
 const products = ref([]);
 const currentImageIndex = ref({});
@@ -191,6 +193,7 @@ const pageSize = ref(10);
 const totalPages = ref(1);
 
 const selectedCity = ref('Kyiv')
+
 
 const goToLogin = () => router.push('/auth/login')
 const goToRegister = () => router.push('/auth/register')
@@ -235,6 +238,9 @@ async function loadProducts() {
   }
 }
 
+function goToProduct(slug) {
+  router.push(`/products/profile/${slug}`);
+}
 
 function updatePaginatedProducts() {
   const start = (currentPage.value - 1) * pageSize.value;

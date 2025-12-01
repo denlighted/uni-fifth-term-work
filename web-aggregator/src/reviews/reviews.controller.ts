@@ -5,6 +5,7 @@ import type {Request} from 'express'
 import {Authorization} from "../auth/decorators";
 import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.interceptor";
 import {User} from "@prisma/client";
+import {UserInfoInterceptor} from "../common/interceptors/user-population-by-id.interceptor";
 
 @Controller('reviews')
 export class ReviewsController {
@@ -41,6 +42,12 @@ export class ReviewsController {
   async deleteReview(@Req() req:Request,@Param('id') id:string){
     const currentUser = req.user as User;
     return await this.reviewsService.deleteReviewById(currentUser.id, currentUser.role,id)
+  }
+
+  @UseInterceptors(UserPopulatingInterceptor)
+  @Get(":slug")
+  async getReviewsForProd(@Param('slug') slug: string){
+    return await this.reviewsService.getReviewForProductBySlug(slug)
   }
 
 }
