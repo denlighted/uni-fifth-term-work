@@ -12,14 +12,6 @@ import {AtbScraper,ForaScraper} from "./scrapers";
 
 @Module({
   imports: [
-
-    MongooseModule.forRootAsync({
-      useFactory: (config: ConfigService) => ({
-        uri: config.getOrThrow<string>('DATABASE_URI'),
-      }),
-      inject: [ConfigService],
-    }),
-
     MongooseModule.forFeature([
       { name: ScrapedProduct.name, schema: ScrapedProductSchema },
       { name: ScrapedCategory.name, schema: ScrapedCategorySchema },

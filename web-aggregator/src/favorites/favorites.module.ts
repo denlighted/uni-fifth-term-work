@@ -10,12 +10,7 @@ import {AuthModule} from "../auth/auth.module";
 import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.interceptor";
 
 @Module({
-  imports:[MongooseModule.forRootAsync({
-    useFactory: (config:ConfigService) => ({
-      uri:config.getOrThrow<string>('DATABASE_URI'),
-    }),
-    inject: [ConfigService],
-  }),
+  imports:[
       MongooseModule.forFeature([
           {name:FavoriteProducts.name,schema:FavoriteProductSchema}
       ]),

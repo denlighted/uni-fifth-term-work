@@ -36,6 +36,13 @@ export class ReviewsService {
              throw new NotFoundException("Product does not exist");
          }
 
+         const existingReview = await this.reviews.findOne({ unitedProduct: product._id, userId: userId });
+
+         if(existingReview){
+             throw new ForbiddenException("You have already reviewed this product");
+         }
+
+
          const newReview = await this.reviews.create({
              review,
              rating,

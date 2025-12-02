@@ -45,34 +45,32 @@ ReviewSchema.pre(/^find/, function (this: any, next: NextFunction) {
 });
 
 ReviewSchema.statics.calcAverageRating = async function (productId) {
-
     const stats = await this.aggregate([
-        {
-            $match: {unitedProduct: productId},
-        },
+        { $match: { unitedProduct: productId } },
         {
             $group: {
                 _id: '$unitedProduct',
-                nRatings: {$sum: 1},
-                avgRating: {$avg: '$rating'},
+                nRatings: { $sum: 1 },
+                avgRating: { $avg: '$rating' },
             }
         }
     ]);
-    console.log(stats);
 
-    if(stats.length>0){
-        await mongoose.model('UnitedProducts').findByIdAndUpdate(productId, {
+    const ProductModel = this.db.model('UnitedProducts');
+
+    if(stats.length > 0){
+        await ProductModel.findByIdAndUpdate(productId, {
             ratingsQuantity: stats[0].nRatings,
             ratingAverage: stats[0].avgRating,
         });
-    }
-    else{
-        await mongoose.model('UnitedProducts').findByIdAndUpdate(productId, {
+    } else {
+        await ProductModel.findByIdAndUpdate(productId, {
             ratingsQuantity: 0,
             ratingAverage: 4.5,
         });
     }
-}
+};
+
 
 ReviewSchema.post("save", async function (this: any) {
     await this.constructor.calcAverageRating(this.unitedProduct);

@@ -11,12 +11,7 @@ import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.
 import {RestProductService} from "../products/services/rest-products.service";
 
 @Module({
-  imports:[MongooseModule.forRootAsync({
-    useFactory: (config:ConfigService) => ({
-      uri:config.getOrThrow<string>('DATABASE_URI'),
-    }),
-    inject: [ConfigService],
-  }),
+  imports:[
     MongooseModule.forFeature([
       {name:BestCart.name,schema:BestCartSchema}
     ]),

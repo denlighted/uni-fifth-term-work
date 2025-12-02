@@ -15,12 +15,7 @@ import {
 import {RestProductService} from "./services/rest-products.service";
 
 @Module({
-  imports:[MongooseModule.forRootAsync({
-    useFactory: (config: ConfigService) => ({
-      uri: config.getOrThrow<string>('DATABASE_URI'),
-    }),
-    inject: [ConfigService],
-  }),
+  imports:[
     MongooseModule.forFeature([
       { name: ScrapedProduct.name, schema: ScrapedProductSchema },
       { name: ScrapedCategory.name, schema: ScrapedCategorySchema },

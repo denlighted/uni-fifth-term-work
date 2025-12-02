@@ -160,54 +160,8 @@
       <!-- Feedback Section -->
       <div class="feedback-section">
         <!-- Stats -->
-        <div class="stats-bar">
-          <div class="stat-item">
-            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span>{{ stats.comments }}</span>
-          </div>
-          <div class="stat-item">
-            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-              <polyline points="16 6 12 2 8 6"></polyline>
-              <line x1="12" y1="2" x2="12" y2="15"></line>
-            </svg>
-            <span>{{ stats.shares }}</span>
-          </div>
-          <div class="stat-item">
-            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-            </svg>
-            <span>{{ stats.likes }}</span>
-          </div>
-          <div class="stat-item">
-            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
-            <span>{{ stats.favorites }}</span>
-          </div>
-        </div>
-
         <!-- Tabs and Rating -->
         <div class="feedback-header">
-          <div class="feedback-tabs">
-            <button
-                class="tab-btn"
-                :class="{ active: activeTab === 'product' }"
-                @click="activeTab = 'product'"
-            >
-              about the product
-            </button>
-            <button
-                class="tab-btn"
-                :class="{ active: activeTab === 'store' }"
-                @click="activeTab = 'store'"
-            >
-              about the store
-            </button>
-          </div>
-
           <div class="rating-section">
             <div class="rate-title">Rate the product</div>
             <div class="stars">
@@ -225,7 +179,7 @@
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
             </div>
-            <div class="overall-rating">Overall: {{ overallRating }}</div>
+            <div class="overall-rating"> Overall: {{ product?.ratingAverage || 'No rating'}}</div>
           </div>
         </div>
 
@@ -238,13 +192,6 @@
           </select>
 
           <h3 class="comment-heading">Leave a comment, we value your opinion</h3>
-
-          <input
-              type="text"
-              class="name-input"
-              placeholder="Name or nickname (optional)"
-              v-model="commentName"
-          >
 
           <textarea
               class="comment-textarea"
@@ -312,6 +259,8 @@
 import {onMounted, ref} from 'vue'
 import {getProductBySlug} from "@/api/profiles/product-profile.js";
 import {useRoute} from "vue-router";
+import {getProfileProductReviews} from "@/api/profiles/get-profile-product-reviews.js";
+import {reviewCreation} from "@/api/reviews/review-creation.js";
 
 const selectedStore = ref('')
 const selectedCategory = ref('')
@@ -321,7 +270,8 @@ let product = ref({
   name: "",
   minPrice: 0,
   maxPrice: 0,
-  sources: []
+  sources: [],
+  ratingAverage:0
 })
 
 const stores = ref([
@@ -333,9 +283,6 @@ const stores = ref([
   { id: 6, name: 'Store 2', price: '54.99' }
 ])
 
-const minPrice = ref('49.99')
-const maxPrice = ref('54.99')
-
 const stats = ref({
   comments: 0,
   shares: 0,
@@ -343,11 +290,11 @@ const stats = ref({
   favorites: 0
 })
 
-const activeTab = ref('product')
 const userRating = ref(0)
-const overallRating = ref('4.5')
+
+const overallRating = ref() // Я получаю!!!
 const sortBy = ref('date')
-const commentName = ref('')
+
 const commentText = ref('')
 
 const currentImageIndex = ref([]);
@@ -355,47 +302,12 @@ const currentImageIndex = ref([]);
 const route = useRoute()
 const slug = route.params.slug;
 
-const userReviews = ref([
-  {
-    id: 1,
-    author: 'John Smith',
-    rating: 5,
-    date: '2024-01-15',
-    text: 'Excellent product! Great quality and fast delivery. Highly recommend to everyone looking for this type of product.',
-    likes: 12,
-    dislikes: 1
-  },
-  {
-    id: 2,
-    author: 'Maria Garcia',
-    rating: 4,
-    date: '2024-01-10',
-    text: 'Good product overall, but the price could be better. Still satisfied with the purchase.',
-    likes: 8,
-    dislikes: 2
-  },
-  {
-    id: 3,
-    author: 'Anonymous',
-    rating: 5,
-    date: '2024-01-08',
-    text: 'Perfect! Exactly what I was looking for. Will buy again.',
-    likes: 15,
-    dislikes: 0
-  },
-  {
-    id: 4,
-    author: 'David Lee',
-    rating: 3,
-    date: '2024-01-05',
-    text: 'Average product. It works but nothing special. Expected more for the price.',
-    likes: 5,
-    dislikes: 3
-  }
-])
+const userReviews = ref([]);
+
 
 onMounted(async () => {
   await getProduct()
+  await getReviews()
 })
 
 async function getProduct(){
@@ -411,6 +323,41 @@ async function getProduct(){
   catch (error)
   {
     console.log(error);
+  }
+}
+
+async function getReviews(){
+  try {
+    const response = await getProfileProductReviews(slug);
+    userReviews.value = response.data.map(rev => ({
+      id: rev._id,
+      text: rev.review,
+      rating: rev.rating,
+      author: `${rev.user.firstName} ${rev.user.lastName}`,
+      date: rev.createdAt,
+      likes: rev.likes || 0,
+      dislikes: rev.dislikes || 0
+    }));
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function addComment(){
+  const data = {
+    review: commentText.value,
+    rating: userRating.value,
+  };
+
+  try{
+    const response = await reviewCreation(data, slug);
+    await getReviews()
+    commentText.value = '';
+    userRating.value = 0;
+  }
+  catch (error){
+    console.error('Ошибка при создании отзыва', error);
+    alert('Не удалось добавить отзыв. Попробуйте снова.'); // Заменить!!!
   }
 }
 
@@ -439,30 +386,7 @@ const goToSignIn = () => {
   console.log('Navigate to sign in')
 }
 
-const addComment = () => {
-  if (commentText.value.trim()) {
-    console.log('Adding comment:', {
-      name: commentName.value || 'Anonymous',
-      text: commentText.value,
-      rating: userRating.value
-    })
-    const newReview = {
-      id: userReviews.value.length + 1,
-      author: commentName.value || 'Anonymous',
-      rating: userRating.value || 0,
-      date: new Date().toISOString().split('T')[0],
-      text: commentText.value,
-      likes: 0,
-      dislikes: 0
-    }
-    userReviews.value.unshift(newReview)
-    stats.value.comments = userReviews.value.length
 
-    commentName.value = ''
-    commentText.value = ''
-    userRating.value = 0
-  }
-}
 
 const likeReview = (reviewId) => {
   const review = userReviews.value.find(r => r.id === reviewId)
@@ -906,12 +830,10 @@ const formatDate = (dateStr) => {
 }
 
 .feedback-header {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end; /* двигает дочерний блок вправо */
+  align-items: center; /* по вертикали выравнивание */
+  padding: 0 20px; /* отступы по краям при желании */
 }
 
 .feedback-tabs {
