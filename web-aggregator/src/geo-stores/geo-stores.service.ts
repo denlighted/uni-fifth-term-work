@@ -2,8 +2,6 @@ import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common
 import axios from "axios";
 import {ConfigService} from "@nestjs/config";
 import {PrismaService} from "../prisma/prisma.service";
-import {User} from "@prisma/client";
-import {Request, Response} from "express";
 import {StoreInfoInterface} from "./interfaces/store-info.interface";
 
 @Injectable()
@@ -18,6 +16,7 @@ export class GeoStoresService {
         this.URL = configService.getOrThrow<string>("OVERPASS_API_URL")
 
     }
+
 
     private async getSupermarketsByBrandAndGeo(brand: string, userId:string): Promise<StoreInfoInterface[]> {
 
@@ -43,6 +42,8 @@ export class GeoStoresService {
         const{lat,lon} = geo;
 
 
+
+
         const query = `
         [out:json][timeout:25];
         (
@@ -63,18 +64,66 @@ export class GeoStoresService {
                 timeout: 30000
             });
 
-            return (data.elements || []).map(el => ({
-                id: el.id,
-                name: el.tags?.name || "Unknown market",
-                brand: el.tags?.brand || brand,
-                address: `${el.tags?.["addr:street"] || ""} ${el.tags?.["addr:housenumber"] || ""}`.trim(),
-                lat: el.lat || el.center?.lat,
-                lon: el.lon || el.center?.lon,
-            }));
+
+
+            const storeInfoPromises = (data.elements || []).map(async (el) => {
+                const address = await this.getAddressFromCoordinates(el.lat, el.lon); // Получаем адрес
+                const distance = this.calculateDistance(lat, lon, el.lat, el.lon); // Вычисляем дистанцию
+                return {
+                    id: el.id,
+                    name: el.tags?.name || "Unknown market",
+                    brand: el.tags?.brand || brand,
+                    address: address,
+                    lat: el.lat || el.center?.lat,
+                    lon: el.lon || el.center?.lon,
+                    homeLat: lat,
+                    homeLon: lon,
+                    distance: distance
+                };
+            });
+
+            // Ждем выполнения всех промисов
+            return await Promise.all(storeInfoPromises);
         } catch (err) {
             console.error(`[Overpass API] Error fetching ${brand}:`, err.message);
             return [];
         }
+    }
+
+    async getAddressFromCoordinates(lat: number, lon: number): Promise<string> {
+        try {
+            const response = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
+                params: {
+                    lat: lat,
+                    lon: lon,
+                    format: 'json',
+                    addressdetails: 1  // Обратите внимание на этот параметр
+                }
+            });
+
+            // Проверяем наличие данных в ответе
+            if (response.data && response.data.address) {
+                // Возвращаем полный адрес, включая дом
+                const address = response.data.address;
+                const formattedAddress = `${address.road || ''} ${address.house_number || ''}`;
+                return formattedAddress.trim() || 'Unknown address';
+            }
+            return 'Address not found';
+        } catch (error) {
+            console.error("Error fetching address:", error);
+            return 'Error fetching address';
+        }
+    }
+
+    private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number):number{
+        const R = 6371; // Радиус Земли в километрах
+        const dLat = (lat2 - lat1) * (Math.PI / 180);
+        const dLon = (lon2 - lon1) * (Math.PI / 180);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Расстояние в километрах
     }
 
     async getSupermarketsGeo(userId:string):Promise<StoreInfoInterface[]> {

@@ -36,7 +36,7 @@
             <Search class="input-icon" :size="18"/>
             <input
                 type="text"
-                placeholder="Choose a store"
+                placeholder="Enter the product name"
                 class="search-input"
             />
           </div>
@@ -45,14 +45,6 @@
             <input
                 type="text"
                 placeholder="Select a category"
-                class="search-input"
-            />
-          </div>
-          <div class="input-wrapper">
-            <Search class="input-icon" :size="18"/>
-            <input
-                type="text"
-                placeholder="Search for a product or barcode"
                 class="search-input"
             />
           </div>
@@ -83,12 +75,6 @@
             <select class="filter-select">
               <option>Trademark</option>
             </select>
-            <select class="filter-select">
-              <option>Weight</option>
-            </select>
-            <button class="filter-button">
-              Manufacturing technology
-            </button>
           </div>
         </aside>
 
@@ -363,17 +349,7 @@ async function getUser(){
   margin: 0;
 }
 
-.city-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #374151;
-  font-weight: 600;
-}
 
-.city-label {
-  font-weight: 600;
-}
 
 .search-inputs {
   display: grid;

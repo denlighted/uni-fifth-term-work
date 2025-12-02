@@ -10,6 +10,7 @@ import api from "../api/axios";
 import ProductPage from "../views/profiles/ProductProfile.vue";
 import FavoritesPage from "../views/pages/FavoritesPage.vue";
 import CheapestBasket from "../views/pages/CheapestBasket.vue";
+import AuthRequiresDialog from "../components/UI/AuthRequiresDialog.vue";
 
 
 const routes = [

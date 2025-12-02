@@ -5,8 +5,16 @@
       <div class="header-content">
         <div class="logo">LowPrice.com</div>
         <div class="header-actions">
-          <button class="header-btn" @click="goToSignUp">sign up</button>
-          <button class="header-btn" @click="goToSignIn">sign in</button>
+          <div class="auth-buttons">
+            <template v-if="!user">
+              <button class="btn-auth" @click="goToRegister">sign up</button>
+              <button class="btn-auth" @click="goToLogin">sign in</button>
+            </template>
+
+            <template v-else>
+              <a href="/profile" class="user-name">Hello, {{ user.firstName }}</a>
+            </template>
+          </div>
         </div>
       </div>
     </header>
@@ -15,12 +23,11 @@
     <div class="search-section">
       <div class="search-container">
         <h2 class="search-title">Price Aggregator</h2>
-        <div class="city-selector">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-            <circle cx="12" cy="10" r="3"></circle>
-          </svg>
-          <span>City</span>
+        <div class="city-selector-dropdown">
+          <MapPin :size="20" />
+          <select v-model="selectedCity" class="city-select">
+            <option value="Kyiv">Kyiv</option>
+          </select>
         </div>
       </div>
       <div class="search-inputs">
@@ -29,7 +36,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.35-4.35"></path>
           </svg>
-          <input type="text" placeholder="Choose a store" v-model="selectedStore">
+          <input type="text" placeholder="Enter the product name" v-model="selectedStore">
         </div>
         <div class="search-input">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -38,20 +45,13 @@
           </svg>
           <input type="text" placeholder="Select a category" v-model="selectedCategory">
         </div>
-        <div class="search-input">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-          </svg>
-          <input type="text" placeholder="Search for a product or barcode" v-model="searchQuery">
-        </div>
       </div>
     </div>
 
     <!-- Product Section -->
     <div class="content-container">
       <div class="product-section">
-        <h1 class="product-heading">{{product.name}}</h1>
+        <h1 class="product-heading">{{ product.name }}</h1>
 
         <div class="product-layout">
           <!-- Product Image -->
@@ -110,9 +110,8 @@
             <div class="store-info">
               <div class="store-list-name">{{ store.name }}</div>
               <div class="store-address">Address: {{ store.address || 'N/A' }}</div>
-              <div class="store-distance">Distance: {{ (Math.random() * 5 + 0.5).toFixed(1) }} km</div>
+              <div class="store-distance">Distance: {{ store.distance.toFixed(2) }} km</div>
             </div>
-            <div class="store-list-price">{{ store.price }}</div>
           </div>
         </div>
       </div>
@@ -136,10 +135,11 @@
                   stroke="currentColor"
                   stroke-width="2"
               >
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
             </div>
-            <div class="overall-rating"> Overall: {{ product?.ratingAverage || 'No rating'}}</div>
+            <div class="overall-rating"> Overall: {{ product?.ratingAverage || 'No rating' }}</div>
           </div>
         </div>
 
@@ -152,6 +152,7 @@
           </select>
 
           <h3 class="comment-heading">Leave a comment, we value your opinion</h3>
+          <AuthRequiresDialog ref="dialogRef" />
 
           <textarea
               class="comment-textarea"
@@ -182,7 +183,8 @@
                       viewBox="0 0 24 24"
                       stroke-width="2"
                   >
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                   </svg>
                 </div>
               </div>
@@ -191,14 +193,18 @@
 
               <div class="review-actions">
                 <button class="review-action-btn" @click="likeReview(review.id)">
-                  <svg class="review-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                  <svg class="review-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="2">
+                    <path
+                        d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
                   </svg>
                   <span>{{ review.likes }}</span>
                 </button>
                 <button class="review-action-btn" @click="dislikeReview(review.id)">
-                  <svg class="review-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+                  <svg class="review-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="2">
+                    <path
+                        d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
                   </svg>
                   <span>{{ review.dislikes }}</span>
                 </button>
@@ -223,6 +229,14 @@ import {getProfileProductReviews} from "@/api/profiles/get-profile-product-revie
 import {reviewCreation} from "@/api/reviews/review-creation.js";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import {getUsersStores} from "@/api/geo/get-users-stores.js";
+import {useNotificationStore} from "@/components/notification.js";
+import AuthRequiresDialog from "@/components/UI/AuthRequiresDialog.vue";
+import router from "@/router/index.js";
+import {getUserProfile} from "@/api/profiles/user-profile.js";
+import {MapPin} from "lucide-vue-next";
+
+const dialogRef = ref(null);
 
 const selectedStore = ref('')
 const selectedCategory = ref('')
@@ -233,20 +247,14 @@ let product = ref({
   minPrice: 0,
   maxPrice: 0,
   sources: [],
-  ratingAverage:0
+  ratingAverage: 0
 })
 
-const stores = [
-  { id: 1769805995, name: 'Фора', lat: 50.4767779, lon: 30.4418709, price: '20 UAH' },
-  { id: 8205222151, name: 'Фора', lat: 50.4775178, lon: 30.4498067, price: '22 UAH' },
-  { id: 3100524592, name: 'АТБ-Маркет', lat: 50.478069, lon: 30.4504697, price: '19 UAH' },
-  { id: 3829927536, name: 'АТБ-Маркет', lat: 50.4739989, lon: 30.4451357, price: '18 UAH' },
-];
 
+let stores = ref([]);
 
 
 const mapContainer = ref(null);
-
 
 
 const userRating = ref(0)
@@ -260,12 +268,20 @@ const currentImageIndex = ref([]);
 const route = useRoute()
 const slug = route.params.slug;
 
+const user = ref(null)
+
 const userReviews = ref([]);
+
+const notification = useNotificationStore();
+
+const selectedCity = ref('Kyiv')
 
 
 onMounted(async () => {
   await getProduct();
   await getReviews();
+  await getUsersStoresLocation()
+  await  getUser()
 
   nextTick(() => {
     if (mapContainer.value) {
@@ -274,17 +290,29 @@ onMounted(async () => {
       const map = new mapboxgl.Map({
         container: mapContainer.value,
         style: 'mapbox://styles/mapbox/streets-v11',
-        center: [30.4468, 50.4768], // Центр карты
+        center: [30.4468, 50.4768],
         zoom: 13,
       });
 
       map.on('load', () => {
-        stores.forEach(store => {
-          // Создаем стандартный маркер
+        stores.value.forEach(store => {
+          // Маркер магазина
           new mapboxgl.Marker()
               .setLngLat([store.lon, store.lat])
-              .setPopup(new mapboxgl.Popup({ offset: 25 })
-                  .setHTML(`<h3>${store.name}</h3><p>Price: ${store.price}</p>`))
+              .setPopup(
+                  new mapboxgl.Popup({offset: 25})
+                      .setHTML(`
+                            <h3>${store.name}</h3>`)
+              )
+              .addTo(map);
+
+          // Маркер места пользователя (homeLat, homeLon)
+          new mapboxgl.Marker({color: 'red'}) // Можно использовать любой цвет
+              .setLngLat([store.homeLon, store.homeLat])
+              .setPopup(
+                  new mapboxgl.Popup({offset: 25})
+                      .setHTML(`<h3>User Location</h3>`)
+              )
               .addTo(map);
         });
       });
@@ -294,23 +322,21 @@ onMounted(async () => {
   });
 });
 
-async function getProduct(){
-  try{
-      const response = await getProductBySlug(slug);
+async function getProduct() {
+  try {
+    const response = await getProductBySlug(slug);
 
-      product.value = response.data;
+    product.value = response.data;
 
-      product.value.images = response.data.sources.map(s => s.imageLink);
+    product.value.images = response.data.sources.map(s => s.imageLink);
 
-      currentImageIndex.value[product.value.id] = 0;
-  }
-  catch (error)
-  {
+    currentImageIndex.value[product.value.id] = 0;
+  } catch (error) {
     console.log(error);
   }
 }
 
-async function getReviews(){
+async function getReviews() {
   try {
     const response = await getProfileProductReviews(slug);
     userReviews.value = response.data.map(rev => ({
@@ -327,21 +353,52 @@ async function getReviews(){
   }
 }
 
-async function addComment(){
+async function getUsersStoresLocation() {
+  try {
+    const response = await getUsersStores();
+    console.log(response.data);
+    stores.value = response.data.map(store => ({
+      id: store.id,
+      name: store.name,
+      address: store.address,
+      lat: store.lat,
+      lon: store.lon,
+      homeLat: store.homeLat,
+      homeLon: store.homeLon,
+      distance: store.distance
+    }))
+
+
+  } catch (error) {
+    console.error(error.message);
+    console.log(error.response);
+  }
+}
+
+async function getUser(){
+  const response = await getUserProfile()
+  user.value = response.data
+}
+
+async function addComment() {
   const data = {
     review: commentText.value,
     rating: userRating.value,
   };
 
-  try{
+  try {
     const response = await reviewCreation(data, slug);
     await getReviews()
     commentText.value = '';
     userRating.value = 0;
-  }
-  catch (error){
-    console.error('Ошибка при создании отзыва', error);
-    alert('Не удалось добавить отзыв. Попробуйте снова.'); // Заменить!!!
+    notification.show("Success, review has been added", 'success');
+  } catch (error) {
+    console.error('Error, trying create review', error);
+    if (error.response && error.response.status === 401) {
+      dialogRef.value.showDialog();
+    } else {
+      notification.show(`Error, review has not been added`, 'error');
+    }
   }
 }
 
@@ -362,14 +419,8 @@ function goToImage(productId, index) {
 }
 
 
-const goToSignUp = () => {
-  console.log('Navigate to sign up')
-}
-
-const goToSignIn = () => {
-  console.log('Navigate to sign in')
-}
-
+const goToLogin = () => router.push('/auth/login')
+const goToRegister = () => router.push('/auth/register')
 
 
 const likeReview = (reviewId) => {
@@ -388,7 +439,7 @@ const dislikeReview = (reviewId) => {
 
 const formatDate = (dateStr) => {
   const date = new Date(dateStr)
-  const options = { year: 'numeric', month: 'long', day: 'numeric' }
+  const options = {year: 'numeric', month: 'long', day: 'numeric'}
   return date.toLocaleDateString('en-US', options)
 }
 </script>
@@ -426,19 +477,19 @@ const formatDate = (dateStr) => {
   gap: 12px;
 }
 
-.header-btn {
-  background-color: transparent;
-  color: white;
+.btn-auth {
+  padding: 6px 16px;
   border: 1px solid white;
-  padding: 6px 20px;
-  border-radius: 20px;
+  border-radius: 9999px;
+  background: transparent;
+  color: white;
   cursor: pointer;
-  font-size: 14px;
   transition: background-color 0.2s;
+  margin: 5px;
 }
 
-.header-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.btn-auth:hover {
+  background-color: #4b5563;
 }
 
 /* Search Section */
@@ -458,6 +509,15 @@ const formatDate = (dateStr) => {
   margin-bottom: 20px;
 }
 
+.user-name {
+  color: white;
+  text-decoration: none;
+}
+
+.user-name:hover {
+  color: orange;      /* при наведении */
+}
+
 .search-title {
   font-size: 20px;
   font-weight: 600;
@@ -465,30 +525,33 @@ const formatDate = (dateStr) => {
   margin: 0;
 }
 
-.city-selector {
+.city-selector-dropdown {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #2d2d2d;
-  font-weight: 500;
+  gap: 8px;
+  color: #374151;
 }
 
-.custom-marker {
-  background-color: #fff;
-  padding: 8px;
+.city-select {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  font-size: 12px;
-  color: #333;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
   cursor: pointer;
-  text-align: center;
-  width: 100px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.city-select:hover {
+  border-color: #9ca3af;
+}
 
-.icon {
-  width: 20px;
-  height: 20px;
+.city-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .search-inputs {
@@ -537,7 +600,7 @@ const formatDate = (dateStr) => {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   color: white;
   border: none;
   padding: 4px 8px;
@@ -554,8 +617,6 @@ const formatDate = (dateStr) => {
 .nav-btn.right {
   right: 10px;
 }
-
-
 
 
 /* Product Section */
@@ -679,44 +740,6 @@ const formatDate = (dateStr) => {
   height: 100%;
 }
 
-.map-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.map-marker {
-  cursor: pointer;
-  transition: r 0.2s;
-}
-
-.map-controls {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.map-control-btn {
-  width: 36px;
-  height: 36px;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.map-control-btn:hover {
-  background-color: #f5f5f5;
-  border-color: #2d2d2d;
-}
 
 .map-control-btn svg {
   width: 20px;
@@ -783,11 +806,8 @@ const formatDate = (dateStr) => {
   color: #666;
 }
 
-.store-list-price {
-  font-size: 18px;
-  font-weight: 600;
-  color: #2d2d2d;
-}
+
+
 
 /* Feedback Section */
 .feedback-section {
@@ -796,8 +816,6 @@ const formatDate = (dateStr) => {
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
-
 
 
 .feedback-header {

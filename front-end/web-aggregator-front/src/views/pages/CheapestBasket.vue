@@ -65,7 +65,7 @@
               <Search class="input-icon" :size="18" />
               <input
                   type="text"
-                  placeholder="Choose a store"
+                  placeholder="Enter the product name"
                   class="search-input"
               />
             </div>
@@ -74,14 +74,6 @@
               <input
                   type="text"
                   placeholder="Select a category"
-                  class="search-input"
-              />
-            </div>
-            <div class="input-wrapper">
-              <Search class="input-icon" :size="18" />
-              <input
-                  type="text"
-                  placeholder="Search for a product or barcode"
                   class="search-input"
               />
             </div>
