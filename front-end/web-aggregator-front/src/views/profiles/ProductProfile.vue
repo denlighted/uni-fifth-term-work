@@ -97,59 +97,19 @@
       <!-- Map Section -->
       <div class="map-section">
         <h2 class="map-heading">Store Locations</h2>
+
+        <!-- Карта -->
         <div class="map-container">
-          <div class="map-placeholder">
-            <svg viewBox="0 0 800 400" class="map-svg">
-              <rect width="800" height="400" fill="#e8e8e8"/>
-
-              <!-- Map markers -->
-              <g v-for="(store, index) in stores" :key="store.id">
-                <circle
-                    :cx="150 + (index * 100)"
-                    :cy="180 + (Math.random() * 80)"
-                    r="8"
-                    fill="#2d2d2d"
-                    class="map-marker"
-                />
-                <circle
-                    :cx="150 + (index * 100)"
-                    :cy="180 + (Math.random() * 80)"
-                    r="15"
-                    fill="none"
-                    stroke="#2d2d2d"
-                    stroke-width="2"
-                    opacity="0.3"
-                />
-              </g>
-
-              <!-- Map UI elements -->
-              <text x="400" y="30" text-anchor="middle" fill="#666" font-size="14">Interactive Map</text>
-            </svg>
-          </div>
-
-          <div class="map-controls">
-            <button class="map-control-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="16"></line>
-                <line x1="8" y1="12" x2="16" y2="12"></line>
-              </svg>
-            </button>
-            <button class="map-control-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="8" y1="12" x2="16" y2="12"></line>
-              </svg>
-            </button>
-          </div>
+          <div ref="mapContainer" class="map-placeholder" style="width: 100%; height: 400px;"></div>
         </div>
 
+        <!-- Список магазинов -->
         <div class="store-list">
           <div v-for="(store, index) in stores" :key="store.id" class="store-list-item">
             <div class="store-marker-icon">{{ index + 1 }}</div>
             <div class="store-info">
               <div class="store-list-name">{{ store.name }}</div>
-              <div class="store-address">Address: 123 Main St, City</div>
+              <div class="store-address">Address: {{ store.address || 'N/A' }}</div>
               <div class="store-distance">Distance: {{ (Math.random() * 5 + 0.5).toFixed(1) }} km</div>
             </div>
             <div class="store-list-price">{{ store.price }}</div>
@@ -256,11 +216,13 @@
 </template>
 
 <script setup>
-import {onMounted, ref} from 'vue'
+import {nextTick, onMounted, ref} from 'vue'
 import {getProductBySlug} from "@/api/profiles/product-profile.js";
 import {useRoute} from "vue-router";
 import {getProfileProductReviews} from "@/api/profiles/get-profile-product-reviews.js";
 import {reviewCreation} from "@/api/reviews/review-creation.js";
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const selectedStore = ref('')
 const selectedCategory = ref('')
@@ -274,25 +236,21 @@ let product = ref({
   ratingAverage:0
 })
 
-const stores = ref([
-  { id: 1, name: 'Store 1', price: '49.99' },
-  { id: 2, name: 'Store 3', price: '50.89' },
-  { id: 3, name: 'Store 8', price: '51.49' },
-  { id: 4, name: 'Store 4', price: '52.39' },
-  { id: 5, name: 'Store 9', price: '54.00' },
-  { id: 6, name: 'Store 2', price: '54.99' }
-])
+const stores = [
+  { id: 1769805995, name: 'Фора', lat: 50.4767779, lon: 30.4418709, price: '20 UAH' },
+  { id: 8205222151, name: 'Фора', lat: 50.4775178, lon: 30.4498067, price: '22 UAH' },
+  { id: 3100524592, name: 'АТБ-Маркет', lat: 50.478069, lon: 30.4504697, price: '19 UAH' },
+  { id: 3829927536, name: 'АТБ-Маркет', lat: 50.4739989, lon: 30.4451357, price: '18 UAH' },
+];
 
-const stats = ref({
-  comments: 0,
-  shares: 0,
-  likes: 2,
-  favorites: 0
-})
+
+
+const mapContainer = ref(null);
+
+
 
 const userRating = ref(0)
 
-const overallRating = ref() // Я получаю!!!
 const sortBy = ref('date')
 
 const commentText = ref('')
@@ -306,9 +264,35 @@ const userReviews = ref([]);
 
 
 onMounted(async () => {
-  await getProduct()
-  await getReviews()
-})
+  await getProduct();
+  await getReviews();
+
+  nextTick(() => {
+    if (mapContainer.value) {
+      mapboxgl.accessToken = 'pk.eyJ1IjoibHlhaHBldCIsImEiOiJjbWkwYmFsdDIwZzExMm1yNGk5aHo0N3h1In0.i9NQ4xo1yq9AsIMJpa_Hwg';
+
+      const map = new mapboxgl.Map({
+        container: mapContainer.value,
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [30.4468, 50.4768], // Центр карты
+        zoom: 13,
+      });
+
+      map.on('load', () => {
+        stores.forEach(store => {
+          // Создаем стандартный маркер
+          new mapboxgl.Marker()
+              .setLngLat([store.lon, store.lat])
+              .setPopup(new mapboxgl.Popup({ offset: 25 })
+                  .setHTML(`<h3>${store.name}</h3><p>Price: ${store.price}</p>`))
+              .addTo(map);
+        });
+      });
+    } else {
+      console.error("Map container is not defined");
+    }
+  });
+});
 
 async function getProduct(){
   try{
@@ -489,6 +473,19 @@ const formatDate = (dateStr) => {
   font-weight: 500;
 }
 
+.custom-marker {
+  background-color: #fff;
+  padding: 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+  text-align: center;
+  width: 100px;
+}
+
+
 .icon {
   width: 20px;
   height: 20px;
@@ -605,11 +602,6 @@ const formatDate = (dateStr) => {
   margin-left: -35px; /* ← регулируешь насколько надо */
 }
 
-.placeholder-svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
 
 .price-section {
   display: flex;
@@ -696,10 +688,6 @@ const formatDate = (dateStr) => {
 .map-marker {
   cursor: pointer;
   transition: r 0.2s;
-}
-
-.map-marker:hover {
-  r: 10;
 }
 
 .map-controls {
@@ -809,57 +797,14 @@ const formatDate = (dateStr) => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.stats-bar {
-  display: flex;
-  gap: 40px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 20px;
-}
 
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #666;
-}
 
-.stat-icon {
-  width: 20px;
-  height: 20px;
-}
 
 .feedback-header {
   display: flex;
   justify-content: flex-end; /* двигает дочерний блок вправо */
   align-items: center; /* по вертикали выравнивание */
   padding: 0 20px; /* отступы по краям при желании */
-}
-
-.feedback-tabs {
-  display: flex;
-  gap: 12px;
-}
-
-.tab-btn {
-  padding: 8px 20px;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  background-color: white;
-  color: #666;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.tab-btn:hover {
-  border-color: #2d2d2d;
-}
-
-.tab-btn.active {
-  background-color: #2d2d2d;
-  color: white;
-  border-color: #2d2d2d;
 }
 
 .rating-section {
@@ -930,19 +875,6 @@ const formatDate = (dateStr) => {
   font-weight: 600;
   color: #2d2d2d;
   margin: 0;
-}
-
-.name-input {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none;
-  max-width: 300px;
-}
-
-.name-input:focus {
-  border-color: #2d2d2d;
 }
 
 .comment-textarea {

@@ -236,7 +236,7 @@ const loadUser = async () => {
 
   }
   catch (error){
-    console.error("Error loading users", error);
+    notification.show("Error, something goes wrong while user uploading ","error");
   }
 }
 
@@ -247,10 +247,11 @@ const handleSaveSettings = async () => {
     const response = await changeProfile(payload)
 
     await loadUser()
+    notification.show("Success, the changes were accepted","success");
 
   }
   catch (error){
-    console.error("Failed to update profile:", error)
+    notification.show("Error, the changes were not accepted","error");
   }
 }
 

@@ -12,9 +12,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mapbox/mapbox-gl-geocoder": "^5.1.2",
     "@nestjs/axios": "^4.0.1",
     "axios": "^1.13.2",
     "lucide-vue-next": "^0.554.0",
+    "mapbox-gl": "^3.16.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3"
