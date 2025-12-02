@@ -66,8 +66,11 @@ import { ref } from 'vue'
 import {registerUser} from "@/api/auth/register.ts";
 import {googleAuth} from "@/api/auth/google-auth.js";
 import router from "@/router/index.js";
+import {useNotificationStore} from "@/components/notification.js";
 
 const backendHost = 'http://localhost:3000';
+
+const notification = useNotificationStore();
 
 const registerForm = ref({
   email: '',
@@ -80,7 +83,7 @@ const registerForm = ref({
 
 const handleRegister = async () => {
   if (registerForm.value.password !== registerForm.value.confirmPassword) {
-    alert('Passwords do not match!')
+    notification.show("Error, passwords do not match",'error')
     return
   }
   try {
@@ -95,14 +98,14 @@ const handleRegister = async () => {
 
     const response = await registerUser(data)
     console.log('Registration successful:', response.data)
-    alert('Registration successful! Redirection to login page...')
+    notification.show('Registration successful! Redirection to login page...','success')
     setTimeout(() => {
       router.push('/auth/login');
     }, 1500);
 
   } catch (error) {
     console.error('Registration failed:', error)
-    alert('Registration error! Please check your details.')
+    notification.show('Registration error! Please check your credentials. You may be registered!','error')
   }
 }
 
