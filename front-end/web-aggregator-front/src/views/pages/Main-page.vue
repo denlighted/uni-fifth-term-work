@@ -9,7 +9,6 @@
             <button class="btn-auth" @click="goToRegister">sign up</button>
             <button class="btn-auth" @click="goToLogin">sign in</button>
           </template>
-
           <template v-else>
             <a href="/profile" class="user-name">Hello, {{ user.firstName }}</a>
           </template>
@@ -55,19 +54,6 @@
       <div class="content-wrapper">
         <!-- Sidebar Filters -->
         <aside class="sidebar">
-          <div class="filters-card">
-            <div class="store-filters">
-              <label v-for="store in stores" :key="store.id" class="checkbox-label">
-                <input
-                    type="checkbox"
-                    v-model="store.selected"
-                    class="checkbox-input"
-                />
-                <span class="checkbox-text">{{ store.name }}</span>
-              </label>
-            </div>
-          </div>
-
           <div class="additional-filters">
             <select class="filter-select">
               <option>Country of production</option>
@@ -95,11 +81,10 @@
             <div
                 v-for="product in paginatedProducts" :key="product.id"
                 class="product-card"
-                @click="goToProduct(product.slug)"
             >
               <!-- Image carousel -->
-              <div class="product-image">
-                <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
+              <div class="product-image" @click="goToProduct(product.slug)">
+                <button class="nav-btn left" @click.stop="prevImage(product.id)">&lt;</button>
                 <transition name="fade" mode="out-in">
                   <img
                       v-if="product.images && product.images.length"
@@ -109,19 +94,19 @@
                       class="image"
                   />
                 </transition>
-                <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
+                <button class="nav-btn right" @click.stop="nextImage(product.id)">&gt;</button>
                 <!-- Dots -->
                 <div class="dots" v-if="product.images && product.images.length > 1">
-              <span
-            v-for="(img, index) in product.images"
-            :key="index"
-            :class="['dot', { active: currentImageIndex[product.id] === index }]"
-            @click="goToImage(product.id, index)"
-             ></span>
+                  <span
+                      v-for="(img, index) in product.images"
+                      :key="index"
+                      :class="['dot', { active: currentImageIndex[product.id] === index }]"
+                      @click.stop="goToImage(product.id, index)"
+                  ></span>
                 </div>
               </div>
 
-              <div class="product-info">
+              <div class="product-info" @click="goToProduct(product.slug)">
                 <h3 class="product-name">{{ product.name }}</h3>
 
                 <!-- Цены по магазинам -->
@@ -135,7 +120,26 @@
                     <span class="price-value">{{ source.price }} ₴</span>
                   </div>
                 </div>
+              </div>
 
+              <!-- Added cart and favorite icons -->
+              <div class="product-actions">
+                <button
+                    class="action-btn cart-btn"
+                    @click.stop="addToCart(product.id)"
+                    :class="{ active: product.isInCart }"
+                    title="Add to cart"
+                >
+                  <ShoppingCart :size="20" :fill="product.isInCart ? '#2d2d2d' : 'none'" />
+                </button>
+                <button
+                    class="action-btn favorite-btn"
+                    @click.stop="toggleFavorite(product.id)"
+                    :class="{ active: product.isFavorite }"
+                    title="Add to favorites"
+                >
+                  <Star :size="20" :fill="product.isFavorite ? '#fbbf24' : 'none'" />
+                </button>
               </div>
             </div>
           </div>
@@ -161,11 +165,15 @@
 
 <script setup>
 import {ref, computed, onMounted} from 'vue'
-import {Search, MapPin} from 'lucide-vue-next'
+import {Search, MapPin, ShoppingCart, Star} from 'lucide-vue-next'
 import {getAllUnitedProducts} from "@/api/pages/main-page-all-products.ts";
 import router from "@/router/index.ts";
 import {getUserProfile} from "@/api/profiles/user-profile.ts";
 import {useRouter} from "vue-router";
+import {isCart} from "@/api/pages/isCart.js";
+import {isFav} from "@/api/pages/isFav.js";
+import {deleteOrAddToFavorite} from "@/api/pages/delete-favorite.js";
+import {deleteOrAddToCart} from "@/api/pages/delete-from-cart.js";
 
 const products = ref([]);
 const currentImageIndex = ref({});
@@ -178,8 +186,10 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const totalPages = ref(1);
 
-const selectedCity = ref('Kyiv')
+let isCarted = ref(false);
+let isFavorite = ref(false);
 
+const selectedCity = ref('Kyiv')
 
 const goToLogin = () => router.push('/auth/login')
 const goToRegister = () => router.push('/auth/register')
@@ -213,7 +223,9 @@ async function loadProducts() {
       currentImageIndex.value[p.id] = 0;
       return {
         ...p,
-        images: p.sources.map(s => s.imageLink)
+        images: p.sources.map(s => s.imageLink),
+        isFavorite: false,
+        isInCart: false
       }
     });
 
@@ -221,6 +233,26 @@ async function loadProducts() {
     updatePaginatedProducts();
   } catch (error) {
     console.error("Error loading pages", error);
+  }
+}
+
+async function getIsCarted(productId){
+  try{
+    const response = await isCart(productId);
+    isCarted.value = response;
+  }
+  catch (error){
+    console.error(error)
+  }
+}
+
+async function getIsFavorite(productId){
+  try{
+    const response = await isFav(productId);
+    isFavorite.value = response;
+  }
+  catch (error){
+    console.error(error)
   }
 }
 
@@ -251,6 +283,24 @@ function prevPage() {
 async function getUser(){
   const response = await getUserProfile()
   user.value = response.data
+}
+
+async function addToCart(productId) {
+  try{
+    await deleteOrAddToCart({productId});
+  }
+  catch (error){
+    console.log("Something goes wrong", error);
+  }
+}
+
+async function toggleFavorite(productId) {
+  try{
+    await deleteOrAddToFavorite({productId});
+  }
+  catch (error){
+    console.log("Something goes wrong", error);
+  }
 }
 
 
@@ -300,7 +350,7 @@ async function getUser(){
 }
 
 .user-name:hover {
-  color: orange;      /* при наведении */
+  color: orange;
 }
 
 
@@ -401,44 +451,12 @@ async function getUser(){
   flex-shrink: 0;
 }
 
-.filters-card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  padding: 16px;
-  margin-bottom: 16px;
-  border: 1px solid #d1d5db;
-}
-
-.store-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-}
-
-.checkbox-input {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1px solid #d1d5db;
-  cursor: pointer;
-}
-
-.checkbox-text {
-  color: #374151;
-}
 
 .additional-filters {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 70px;
 }
 
 .filter-select,
@@ -458,14 +476,9 @@ async function getUser(){
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.filter-button {
-  text-align: left;
-  transition: background-color 0.2s;
-}
 
-.filter-button:hover {
-  background-color: #f9fafb;
-}
+
+
 
 /* Products Main */
 .products-main {
@@ -554,6 +567,9 @@ async function getUser(){
   border: 2px solid #1f2937;
   overflow: hidden;
   transition: box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
 .product-card:hover {
@@ -567,6 +583,7 @@ async function getUser(){
   justify-content: center;
   background-color: #e5e7eb;
   padding: 8px;
+  cursor: pointer;
 }
 
 .product-image img {
@@ -632,6 +649,8 @@ async function getUser(){
 
 .product-info {
   padding: 16px;
+  cursor: pointer;
+  flex: 1;
 }
 
 .product-name {
@@ -661,6 +680,47 @@ async function getUser(){
 .price-value {
   font-weight: 600;
   color: #1f2937;
+}
+
+/* Added styles for cart and favorite action buttons */
+.product-actions {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.action-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.cart-btn:hover {
+  color: #2d2d2d;
+}
+
+.cart-btn.active {
+  color: #2d2d2d;
+}
+
+.favorite-btn:hover {
+  color: #fbbf24;
+}
+
+.favorite-btn.active {
+  color: #fbbf24;
 }
 
 .pagination {

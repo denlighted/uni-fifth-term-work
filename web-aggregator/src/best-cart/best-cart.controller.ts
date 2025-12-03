@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Post, Req} from '@nestjs/common';
+import {Body, Controller, Get, Param, Post, Req} from '@nestjs/common';
 import { BestCartService } from './best-cart.service';
 import {Authorization} from "../auth/decorators";
 import type{Request} from 'express';
@@ -18,11 +18,11 @@ export class BestCartController {
     return await this.bestCartService.getUserCarted(currentUser.id);
   }
 
-  @Get("is-favorite/:productId")
+  @Get("is-carted/:productId")
   @Authorization()
-  async isCarted(@Body() dto:CartedProductsRequest,@Req() req:Request){
+  async isCarted( @Param("productId") productId:string,@Req() req:Request){
     const currentUser = req.user as User;
-    return await this.bestCartService.isCarted(currentUser.id,dto);
+    return await this.bestCartService.isCarted(currentUser.id,productId);
   }
 
   @Get("cheapest-shop")

@@ -12,7 +12,15 @@
 
           <div class="form-group">
             <label for="register-password">Password</label>
-            <input type="password" id="register-password" v-model="registerForm.password" placeholder="minimum 5 characters" minlength="5" required />
+            <input
+                type="password"
+                id="register-password"
+                v-model="registerForm.password"
+                placeholder="minimum 5 characters"
+                minlength="5"
+                required
+                title="Password must be at least 5 characters long"
+            />
           </div>
 
           <div class="form-group">

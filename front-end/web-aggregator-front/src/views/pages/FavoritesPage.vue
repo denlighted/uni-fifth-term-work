@@ -535,9 +535,10 @@ const handleLogout = async () => {
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 300px; /* ниже, чем было */
-  max-width: 220px; /* уже */
-  margin: 0 auto; /* чтобы центрировалось внутри сетки */
+  height: 380px; /* фиксированная высота */
+  width: 280px; /* фиксированная ширина */
+  margin: 0 auto; /* центрирование карточки */
+
 }
 
 .favorite-card:hover {
@@ -546,7 +547,7 @@ const handleLogout = async () => {
 
 .product-image {
   flex: 0 0 auto;
-  height: 55%;
+  height: 50%;
   background-color: #e5e7eb;
   display: flex;
   align-items: center;

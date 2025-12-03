@@ -48,8 +48,7 @@ export class BestCartService {
         }).lean();
     }
 
-    async isCarted(userId:string,dto:CartedProductsRequest):Promise<boolean>{
-        const {productId} =dto
+    async isCarted(userId:string,productId:string):Promise<boolean>{
         const cartedProd = await this.bestCart.findOne({unitedProduct:productId,userId:userId}).lean();
         return !!cartedProd;
     }

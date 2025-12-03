@@ -128,11 +128,8 @@
                   </div>
 
                   <div class="product-actions">
-                    <button @click="removeFromBasket(product.id)" class="action-btn basket-icon" title="Remove from basket">
+                    <button @click="removeFromBasket(product.productId)" class="action-btn basket-icon" title="Remove from basket">
                       <ShoppingCart :size="20" />
-                    </button>
-                    <button @click="toggleFavorite(product.id)" class="action-btn star-btn" :class="{ active: product.isFavorite }" title="Toggle favorite">
-                      <Star :size="20" :fill="product.isFavorite ? '#fbbf24' : 'none'" />
                     </button>
                   </div>
                 </div>
@@ -166,6 +163,7 @@ import router from "@/router/index.js";
 import {getUserProfile} from "@/api/profiles/user-profile.js";
 import {logout} from "@/api/auth/logout.js";
 import {deleteOrAddToFavorite} from "@/api/pages/delete-favorite.js";
+import {deleteOrAddToCart} from "@/api/pages/delete-from-cart.js";
 
 const activeTab = ref('settings')
 const basketProducts = ref([]);
@@ -190,7 +188,7 @@ async function loadBasket() {
 
     basketProducts.value = response.data.map(cart => {
       currentImageIndex.value[cart._id] = 0;
-
+      console.log(cart.unitedProduct._id);
       return {
         id: cart._id,
         productId: cart.unitedProduct._id,
@@ -207,12 +205,14 @@ async function loadBasket() {
   }
 }
 
-async function removeFromCart(productId){
+async function removeFromBasket(productId){
   try{
-    await deleteOrAddToFavorite({productId});
-    const index = favorites.value.findIndex(p =>p.id ===productId)
-    if (index !== -1) favorites.value.splice(index, 1);
-    await loadFavorites();
+    console.log("Removing product with ID:", productId);
+    await deleteOrAddToCart({productId});
+    const index = basketProducts.value.findIndex(p => p.productId === productId)
+    if (index !== -1) basketProducts.value.splice(index, 1);
+    await loadBasket();
+    await cheapestShop()
   }
   catch (error){
     console.log("Something goes wrong", error);
@@ -251,9 +251,6 @@ async function cheapestShop(){
   }
 }
 
-const removeFromBasket = (productId) => {
-  basketProducts.value = basketProducts.value.filter(p => p.id !== productId)
-}
 
 async function getUser(){
   const response = await getUserProfile()
