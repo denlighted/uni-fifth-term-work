@@ -97,7 +97,7 @@
       <!-- Map Section -->
       <div class="map-section">
         <h2 class="map-heading">Store Locations</h2>
-
+        <p class="map-subtext">* Map does not guarantee product availability in stores</p>
         <!-- Карта -->
         <div class="map-container">
           <div ref="mapContainer" class="map-placeholder" style="width: 100%; height: 400px;"></div>
@@ -722,6 +722,13 @@ const formatDate = (dateStr) => {
   font-weight: 600;
   color: #2d2d2d;
   margin: 0 0 20px 0;
+}
+
+.map-subtext {
+  margin-top: -6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #9c9c9c;
 }
 
 .map-container {
