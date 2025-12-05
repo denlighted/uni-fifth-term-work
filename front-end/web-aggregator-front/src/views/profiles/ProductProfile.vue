@@ -3,7 +3,9 @@
     <!-- Header -->
     <header class="header">
       <div class="header-content">
-        <div class="logo">LowPrice.com</div>
+        <router-link to="/" class="logo-link">
+          <h1 class="logo">LowPrice.com</h1>
+        </router-link>
         <div class="header-actions">
           <div class="auth-buttons">
             <template v-if="!user">
@@ -54,40 +56,93 @@
         <h1 class="product-heading">{{ product.name }}</h1>
 
         <div class="product-layout">
-          <!-- Product Image -->
-          <div class="product-image-container">
-            <div class="product-image">
-              <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
-              <transition name="fade" mode="out-in">
-                <img
-                    v-if="product.images && product.images.length"
-                    :key="currentImageIndex[product.id]"
-                    :src="product.images[currentImageIndex[product.id]]"
-                    class="image"
-                />
-              </transition>
-              <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
-              <!-- Dots -->
-              <div class="dots" v-if="product.images && product.images.length > 1">
-                <span
-                    v-for="(img, index) in product.images"
-                    :key="index"
-                    :class="['dot', { active: currentImageIndex[product.id] === index }]"
-                    @click="goToImage(product.id, index)"
-                ></span>
+          <!-- Top Row: Product Image and Price List -->
+          <div class="top-row">
+            <!-- Left: Product Image -->
+            <div class="product-image-container">
+              <div class="product-image">
+                <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
+                <transition name="fade" mode="out-in">
+                  <img
+                      v-if="product.images && product.images.length"
+                      :key="currentImageIndex[product.id]"
+                      :src="product.images[currentImageIndex[product.id]]"
+                      class="image"
+                  />
+                </transition>
+                <button class="nav-btn right" @click="nextImage(product.id)">&gt;</button>
+                <!-- Dots -->
+                <div class="dots" v-if="product.images && product.images.length > 1">
+                  <span
+                      v-for="(img, index) in product.images"
+                      :key="index"
+                      :class="['dot', { active: currentImageIndex[product.id] === index }]"
+                      @click="goToImage(product.id, index)"
+                  ></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Price List -->
+            <div class="price-section">
+              <div class="price-range">
+                {{ product.minPrice }} - {{ product.maxPrice }} in {{ product.sources.length }} stores
+              </div>
+              <div class="store-prices">
+                <div v-for="prod in product.sources" :key="prod._id" class="store-price-item">
+                  <div class="store-name">{{ prod.store }}</div>
+                  <div class="store-price">{{ prod.price }}</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Price List -->
-          <div class="price-section">
-            <div class="price-range">
-              {{ product.minPrice }} - {{ product.maxPrice }} in {{ product.sources.length }} stores
+          <!-- Bottom Row: Description and Specifications side by side -->
+          <div class="bottom-row">
+            <!-- Product Description -->
+            <div class="description-column">
+              <h2 class="description-heading">Product Description</h2>
+              <div class="description-content">
+                <p>{{ productDescription }}</p>
+              </div>
             </div>
-            <div class="store-prices">
-              <div v-for="prod in product.sources" :key="prod._id" class="store-price-item">
-                <div class="store-name">{{ prod.store }}</div>
-                <div class="store-price">{{ prod.price }}</div>
+
+            <!-- Specifications -->
+            <div class="specifications-column">
+              <h3 class="specifications-heading">Specifications</h3>
+              <div class="specifications-table">
+                <div class="spec-row">
+                  <div class="spec-label">Brand</div>
+                  <div class="spec-value">{{ product.brand || 'N/A' }}</div>
+                </div>
+
+                <div class="spec-row">
+                  <div class="spec-label">Country of Origin</div>
+                  <div class="spec-value">
+                    {{ product.sources?.[0]?.productInfo?.["Країна"] || 'N/A' }}
+                  </div>
+                </div>
+
+                <div class="spec-row">
+                  <div class="spec-label">Category</div>
+                  <div class="spec-value">
+                    {{ product.unitedCategory?.name || 'N/A' }}
+                  </div>
+                </div>
+
+                <div class="spec-row">
+                  <div class="spec-label">Energy value</div>
+                  <div class="spec-value">
+                    {{ product.sources?.[0]?.productInfo?.["Енергетична цінність"] || 'N/A' }}
+                  </div>
+                </div>
+
+                <div class="spec-row">
+                  <div class="spec-label">Number of units</div>
+                  <div class="spec-value">
+                    {{ product.sources?.[0]?.productInfo?.["Кількість одиниць"] || 'N/A' }}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -100,7 +155,19 @@
         <p class="map-subtext">* Map does not guarantee product availability in stores</p>
         <!-- Карта -->
         <div class="map-container">
-          <div ref="mapContainer" class="map-placeholder" style="width: 100%; height: 400px;"></div>
+
+          <!-- Если пользователь НЕ авторизован — показываем надпись -->
+          <div v-if="!user" class="map-locked">
+            Please sign in to see store locations on the map
+          </div>
+
+          <!-- Если авторизован — показываем карту -->
+          <div
+              v-else
+              ref="mapContainer"
+              class="map-placeholder"
+              style="width: 100%; height: 400px;"
+          ></div>
         </div>
 
         <!-- Список магазинов -->
@@ -196,7 +263,7 @@
                   <svg class="review-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                        stroke-width="2">
                     <path
-                        d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                        d="M14 9V5a3 3 0 0 0-3-3l-4 9V2H5.72a2 2 0 0 0-2.33 2H17"></path>
                   </svg>
                   <span>{{ review.likes }}</span>
                 </button>
@@ -204,7 +271,7 @@
                   <svg class="review-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                        stroke-width="2">
                     <path
-                        d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+                        d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2.33 2H17"></path>
                   </svg>
                   <span>{{ review.dislikes }}</span>
                 </button>
@@ -222,7 +289,7 @@
 </template>
 
 <script setup>
-import {nextTick, onMounted, ref} from 'vue'
+import {computed, nextTick, onMounted, ref} from 'vue'
 import {getProductBySlug} from "@/api/profiles/product-profile.js";
 import {useRoute} from "vue-router";
 import {getProfileProductReviews} from "@/api/profiles/get-profile-product-reviews.js";
@@ -247,15 +314,25 @@ let product = ref({
   minPrice: 0,
   maxPrice: 0,
   sources: [],
-  ratingAverage: 0
+  ratingAverage: 0,
+  description: "",
+  brand: "",
+  country: "",
+  category: "",
+  weight: "",
+  dimensions: "",
+  manufacturer: ""
 })
-
 
 let stores = ref([]);
 
 
 const mapContainer = ref(null);
 
+const productDescription = computed(() => {
+  return product.value?.sources?.find(s => s.description && s.description.trim() !== "")
+      ?.description || "Description not available";
+});
 
 const userRating = ref(0)
 
@@ -276,12 +353,15 @@ const notification = useNotificationStore();
 
 const selectedCity = ref('Kyiv')
 
-
 onMounted(async () => {
   await getProduct();
   await getReviews();
   await getUsersStoresLocation()
-  await  getUser()
+  await getUser()
+
+  if (!user.value) {
+    return;
+  }
 
   nextTick(() => {
     if (mapContainer.value) {
@@ -367,8 +447,6 @@ async function getUsersStoresLocation() {
       homeLon: store.homeLon,
       distance: store.distance
     }))
-
-
   } catch (error) {
     console.error(error.message);
     console.log(error.response);
@@ -418,10 +496,8 @@ function goToImage(productId, index) {
   currentImageIndex.value[productId] = index;
 }
 
-
 const goToLogin = () => router.push('/auth/login')
 const goToRegister = () => router.push('/auth/register')
-
 
 const likeReview = (reviewId) => {
   const review = userReviews.value.find(r => r.id === reviewId)
@@ -468,8 +544,21 @@ const formatDate = (dateStr) => {
 }
 
 .logo {
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.logo-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.logo-link:hover .logo {
+  opacity: 0.8;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
 .header-actions {
@@ -618,7 +707,6 @@ const formatDate = (dateStr) => {
   right: 10px;
 }
 
-
 /* Product Section */
 .product-section {
   background-color: white;
@@ -636,14 +724,23 @@ const formatDate = (dateStr) => {
 }
 
 .product-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.top-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 40px;
+  gap: 20px;
 }
 
 .product-image-container {
-  display: flex;
-  justify-content: center;
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .product-image {
@@ -662,7 +759,6 @@ const formatDate = (dateStr) => {
   object-fit: contain;
   margin-left: -35px; /* ← регулируешь насколько надо */
 }
-
 
 .price-section {
   display: flex;
@@ -708,6 +804,84 @@ const formatDate = (dateStr) => {
   color: #2d2d2d;
 }
 
+.bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.description-column {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.description-heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d2d2d;
+  margin: 0 0 16px 0;
+}
+
+.description-content {
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.description-content p {
+  margin: 0;
+}
+
+.no-description {
+  color: #999;
+  font-style: italic;
+}
+
+.specifications-column {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.specifications-heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d2d2d;
+  margin: 0 0 16px 0;
+}
+
+.specifications-table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.spec-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.spec-row:last-child {
+  border-bottom: none;
+}
+
+.spec-label {
+  font-weight: 600;
+  color: #2d2d2d;
+  font-size: 14px;
+}
+
+.spec-value {
+  color: #4b5563;
+  font-size: 14px;
+}
+
 /* Map Section */
 .map-section {
   background-color: white;
@@ -747,6 +921,22 @@ const formatDate = (dateStr) => {
   height: 100%;
 }
 
+.map-locked {
+  width: 100%;
+  height: 400px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 16px;
+  color: #666;
+  text-align: center;
+  padding: 20px;
+}
 
 .map-control-btn svg {
   width: 20px;
@@ -813,9 +1003,6 @@ const formatDate = (dateStr) => {
   color: #666;
 }
 
-
-
-
 /* Feedback Section */
 .feedback-section {
   background-color: white;
@@ -823,7 +1010,6 @@ const formatDate = (dateStr) => {
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
 
 .feedback-header {
   display: flex;
@@ -933,6 +1119,7 @@ const formatDate = (dateStr) => {
 
 .add-btn:hover {
   background-color: #1a1a1a;
+  color: #2d2d2d;
 }
 
 /* Reviews List */
@@ -1046,24 +1233,20 @@ const formatDate = (dateStr) => {
     grid-template-columns: 1fr;
   }
 
+  .top-row {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-row {
+    grid-template-columns: 1fr;
+  }
+
   .product-layout {
     grid-template-columns: 1fr;
   }
 
-  .feedback-header {
+  .description-specs-grid {
     grid-template-columns: 1fr;
-  }
-
-  .rating-section {
-    align-items: flex-start;
-  }
-
-  .map-container {
-    flex-direction: column;
-  }
-
-  .map-placeholder {
-    margin-bottom: 12px;
   }
 }
 </style>
