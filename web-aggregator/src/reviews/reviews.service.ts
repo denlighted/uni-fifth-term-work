@@ -104,6 +104,15 @@ export class ReviewsService {
          return reviews;
      }
 
+     async getUsersReviews(userId:string){
+         if(!userId){
+             throw new NotFoundException("User not found");
+         }
+         const reviews = await this.reviews.find({userId:userId})
+
+         return reviews;
+     }
+
 
 
 }

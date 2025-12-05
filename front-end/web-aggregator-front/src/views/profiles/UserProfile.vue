@@ -4,7 +4,9 @@
     <header class="header">
       <div class="header-content">
         <div class="header-left">
-          <a href="/" class="logo-text" >LowPrice</a>
+          <router-link to="/" class="logo-link">
+            <h1 class="logo">LowPrice.com</h1>
+          </router-link>
         </div>
         <div class="header-center">
         </div>
@@ -41,9 +43,9 @@
             </svg>
             MY PRODUCT CART
           </a>
-          <a href="#" class="nav-item" @click.prevent="activeTab = 'reviews'">
+          <a href="#" class="nav-item" @click.prevent="router.push('/users/reviews')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
             MY REVIEWS
           </a>
@@ -337,13 +339,23 @@ const handleLogout = async () => {
   flex: 1;
 }
 
-.logo-text {
-  font-size: 14px;
+.logo {
+  font-size: 20px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color:white;
-  text-decoration:none
+  margin: 0;
+}
+
+.logo-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  display: inline-block;
+  margin-left: 60px;
+}
+
+.logo-link:hover .logo {
+  opacity: 0.8;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
 .header-center {

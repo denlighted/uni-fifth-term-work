@@ -44,6 +44,19 @@ export class ReviewsController {
     return await this.reviewsService.deleteReviewById(currentUser.id, currentUser.role,id)
   }
 
+
+  @Authorization()
+  @Get("user-reviews")
+  //@UseInterceptors(UserPopulatingInterceptor)
+  async getUserReview(@Req() req:Request){
+    const currentUser = req.user as User
+    return await this.reviewsService.getUsersReviews(currentUser.id);
+  }
+
+
+
+
+  // Always last due to slug!!!
   @UseInterceptors(UserPopulatingInterceptor)
   @Get(":slug")
   async getReviewsForProd(@Param('slug') slug: string){

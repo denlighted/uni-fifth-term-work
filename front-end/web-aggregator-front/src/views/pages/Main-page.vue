@@ -3,7 +3,9 @@
     <!-- Header -->
     <header class="header">
       <div class="header-content">
-        <h1 class="logo">LowPrice.com</h1>
+        <router-link to="/" class="logo-link">
+          <h1 class="logo">LowPrice.com</h1>
+        </router-link>
         <div class="auth-buttons">
           <template v-if="!user">
             <button class="btn-auth" @click="goToRegister">sign up</button>
@@ -337,6 +339,19 @@ async function toggleFavorite(productId) {
   font-size: 20px;
   font-weight: 600;
   margin: 0;
+}
+
+.logo-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  display: inline-block;
+
+}
+
+.logo-link:hover .logo {
+  opacity: 0.8;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
 .auth-buttons {

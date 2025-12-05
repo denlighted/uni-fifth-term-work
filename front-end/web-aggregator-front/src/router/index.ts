@@ -11,6 +11,7 @@ import ProductPage from "../views/profiles/ProductProfile.vue";
 import FavoritesPage from "../views/pages/FavoritesPage.vue";
 import CheapestBasket from "../views/pages/CheapestBasket.vue";
 import AuthRequiresDialog from "../components/UI/AuthRequiresDialog.vue";
+import UsersReviews from "../views/pages/UsersReviews.vue";
 
 
 const routes = [
@@ -65,6 +66,12 @@ const routes = [
         path:"/products/profile/:slug",
         name:"product-profile",
         component:ProductPage
+    },
+
+    {
+      path:"/users/reviews",
+      name:"user-reviews",
+      component:UsersReviews
     },
 
     {
