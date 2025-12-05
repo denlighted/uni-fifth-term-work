@@ -344,9 +344,10 @@ export class AuthService {
         }
 
         const data = Object.fromEntries(
-            Object.entries(dto)
-                .map(([key, value]) => [key, value === '' ? undefined : value])
-                .filter(([_, value]) => value !== undefined)
+            Object.entries(dto).map(([key, value]) => {
+                if (key === 'address' && value === '') return [key, ''];
+                return [key, value === '' ? undefined : value];
+            }).filter(([_, value]) => value !== undefined)
         );
 
         if (Object.keys(data).length === 0) {

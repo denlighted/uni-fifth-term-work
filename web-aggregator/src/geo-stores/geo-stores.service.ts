@@ -2,7 +2,9 @@ import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common
 import axios from "axios";
 import {ConfigService} from "@nestjs/config";
 import {PrismaService} from "../prisma/prisma.service";
-import {StoreInfoInterface} from "./interfaces/store-info.interface";
+import {StoreInfoInterface} from "./interfaces";
+import {UsersGeoResponse} from "./dto/geo-response.dto";
+import {UserAddress} from "./interfaces";
 
 @Injectable()
 export class GeoStoresService {
@@ -154,6 +156,31 @@ export class GeoStoresService {
              displayName: f.place_name,
          };
 
+    }
+
+    async getAddressByCords(userId:string,dto:UsersGeoResponse){
+        const {lat,lon} = dto
+
+        try {
+            const response = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
+                params: { lat, lon, format: 'json', addressdetails: 1 },
+                headers: { 'User-Agent': 'LowPriceApp/1.0' }
+            });
+
+            if (response.data && response.data.address) {
+                const address = response.data.address;
+                const formattedAddress = `${address.city || ''}, ${address.road || ''} ${address.house_number || ''} `.trim();
+
+                await this.prismaService.user.update({where:{id:userId},data:{address:formattedAddress}});
+
+                return { address: formattedAddress };
+
+            }
+            return {message:'Address not found'};
+        } catch (error) {
+            console.error("Error fetching address:", error);
+            return {message:'Error fetching address'};
+        }
     }
 
 }

@@ -194,6 +194,7 @@ import {logout} from "@/api/auth/logout.js";
 import {changeAvatar} from "@/api/profiles/change-avatar.js";
 import {useNotificationStore} from "@/components/notification.js";
 import { useRouter } from 'vue-router';
+import {setUsersAddress} from "@/api/geo/set-users-address.js";
 
 const activeTab = ref('settings')
 
@@ -221,6 +222,7 @@ const passwordForm = {
 
 onMounted(() => {
   loadUser()
+  requestGeolocation()
 })
 
 const loadUser = async () => {
@@ -242,10 +244,38 @@ const loadUser = async () => {
   }
 }
 
+const requestGeolocation = () => {
+  if ('geolocation' in navigator) {
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          console.log('[v0] Geo accepted:', {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          })
+          await setUsersAddress({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log('[v0] Пользователь отказал в доступе к геолокации или произошла ошибка:', error.message)
+        }
+    )
+  } else {
+    console.log('[v0] Геолокация не поддерживается этим браузером')
+  }
+}
 
 const handleSaveSettings = async () => {
   try{
-    const payload = Object.fromEntries(Object.entries(userProfile).filter(([key,value])=>value!==''&&key!=='avatar'));
+    const payload = Object.fromEntries(
+        Object.entries(userProfile).map(([key, value]) => {
+          if (key === 'avatar') return null;
+          if (key === 'address') return [key, value];
+          return [key, value === '' ? undefined : value];
+        }).filter(Boolean) // убираем null
+    );
     const response = await changeProfile(payload)
 
     await loadUser()
