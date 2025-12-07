@@ -13,7 +13,12 @@ export class QueryBuilder {
           excludedFields.forEach((fields) => {
                delete queryObj[fields];
           });
-          // console.log(queryObj);
+
+          if(this.dto.search){
+               this.query = this.query.find({
+                    $text: { $search: this.dto.search }
+               });
+          }
 
           //2) Advanced filtering
           let queryStr = JSON.stringify(queryObj);
@@ -23,8 +28,6 @@ export class QueryBuilder {
 
           return this;
      }
-
-
 
      sorting(){
           if(this.dto.sort){
@@ -57,6 +60,7 @@ export class QueryBuilder {
           this.query = this.query.skip(skippedValue).limit(limit);
           return this;
      }
+
 
      build(){
           return this.query.exec();

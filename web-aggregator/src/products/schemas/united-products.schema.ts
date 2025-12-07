@@ -77,3 +77,5 @@
 
         next()
     })
+
+    UnitedProductsSchema.index({name:"text",brand:"text",description:"text"},{default_language:"russian"});

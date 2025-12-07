@@ -36,6 +36,7 @@
           <div class="input-wrapper">
             <Search class="input-icon" :size="18"/>
             <input
+                v-model="searchQuery"
                 type="text"
                 placeholder="Enter the product name"
                 class="search-input"
@@ -81,29 +82,29 @@
 
           <div class="products-grid">
             <div
-                v-for="product in paginatedProducts" :key="product.id"
+                v-for="product in products" :key="product._id"
                 class="product-card"
             >
               <!-- Image carousel -->
               <div class="product-image" @click="goToProduct(product.slug)">
-                <button class="nav-btn left" @click.stop="prevImage(product.id)">&lt;</button>
+                <button class="nav-btn left" @click.stop="prevImage(product._id)">&lt;</button>
                 <transition name="fade" mode="out-in">
                   <img
                       v-if="product.images && product.images.length"
-                      :key="currentImageIndex[product.id]"
-                      :src="product.images[currentImageIndex[product.id]]"
+                      :key="currentImageIndex[product._id]"
+                      :src="product.images[currentImageIndex[product._id]]"
                       alt="Product Image"
                       class="image"
                   />
                 </transition>
-                <button class="nav-btn right" @click.stop="nextImage(product.id)">&gt;</button>
+                <button class="nav-btn right" @click.stop="nextImage(product._id)">&gt;</button>
                 <!-- Dots -->
                 <div class="dots" v-if="product.images && product.images.length > 1">
                   <span
                       v-for="(img, index) in product.images"
                       :key="index"
-                      :class="['dot', { active: currentImageIndex[product.id] === index }]"
-                      @click.stop="goToImage(product.id, index)"
+                      :class="['dot', { active: currentImageIndex[product._id] === index }]"
+                      @click.stop="goToImage(product._id, index)"
                   ></span>
                 </div>
               </div>
@@ -128,7 +129,7 @@
               <div class="product-actions">
                 <button
                     class="action-btn cart-btn"
-                    @click.stop="addToCart(product.id)"
+                    @click.stop="addToCart(product._id)"
                     :class="{ active: product.isInCart }"
                     title="Add to cart"
                 >
@@ -136,7 +137,7 @@
                 </button>
                 <button
                     class="action-btn favorite-btn"
-                    @click.stop="toggleFavorite(product.id)"
+                    @click.stop="toggleFavorite(product._id)"
                     :class="{ active: product.isFavorite }"
                     title="Add to favorites"
                 >
@@ -166,12 +167,12 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed, onMounted, watch} from 'vue'
 import {Search, MapPin, ShoppingCart, Star} from 'lucide-vue-next'
 import {getAllUnitedProducts} from "@/api/pages/main-page-all-products.ts";
 import router from "@/router/index.ts";
 import {getUserProfile} from "@/api/profiles/user-profile.ts";
-import {useRouter} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {isCart} from "@/api/pages/isCart.js";
 import {isFav} from "@/api/pages/isFav.js";
 import {deleteOrAddToFavorite} from "@/api/pages/delete-favorite.js";
@@ -181,17 +182,22 @@ const products = ref([]);
 const currentImageIndex = ref({});
 const sortOrder = ref('cheap')
 
+const route = useRoute();
+
+
 const user = ref(null)
 
-const paginatedProducts = ref([]);
-const currentPage = ref(1);
-const pageSize = ref(10);
+const currentPage = ref(Number(route.query.page) || 1);
 const totalPages = ref(1);
+const searchQuery = ref(route.query.search || '');
 
 let isCarted = ref(false);
 let isFavorite = ref(false);
 
 const selectedCity = ref('Kyiv')
+
+
+let searchTimeout = null;
 
 const goToLogin = () => router.push('/auth/login')
 const goToRegister = () => router.push('/auth/register')
@@ -202,14 +208,27 @@ onMounted(async () => {
   await  getUser()
 });
 
+
+watch(searchQuery, () => {
+
+  clearTimeout(searchTimeout);
+
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1;
+    updateUrlPage();
+    loadProducts();
+  }, 500);
+});
+
+
 function nextImage(productId) {
-  const p = products.value.find(p => p.id === productId);
+  const p = products.value.find(p => p._id === productId);
   currentImageIndex.value[productId] =
       (currentImageIndex.value[productId] + 1) % p.images.length;
 }
 
 function prevImage(productId) {
-  const p = products.value.find(p => p.id === productId);
+  const p = products.value.find(p => p._id === productId);
   currentImageIndex.value[productId] =
       (currentImageIndex.value[productId] - 1 + p.images.length) % p.images.length;
 }
@@ -220,22 +239,35 @@ function goToImage(productId, index) {
 
 async function loadProducts() {
   try {
-    const response = await getAllUnitedProducts();
-    products.value = response.data.map(p => {
-      currentImageIndex.value[p.id] = 0;
-      return {
-        ...p,
-        images: p.sources.map(s => s.imageLink),
-        isFavorite: false,
-        isInCart: false
-      }
+
+
+    const response = await getAllUnitedProducts({ page: currentPage.value, search:searchQuery.value });
+
+    const items = response.data.data;
+
+    if (!items.length && currentPage.value > 1) {
+      currentPage.value--;
+      return await loadProducts();
+    }
+
+    products.value = items;
+    totalPages.value = response.data.totalPages
+
+
+    products.value.forEach(p => {
+      currentImageIndex.value[p._id] = 0;
+      p.images = p.sources.map(s => s.imageLink);
     });
 
-    totalPages.value = Math.ceil(products.value.length / pageSize.value);
-    updatePaginatedProducts();
   } catch (error) {
     console.error("Error loading pages", error);
   }
+}
+
+function updateUrlPage() {
+  router.push({
+    query: { page: currentPage.value }
+  });
 }
 
 async function getIsCarted(productId){
@@ -262,23 +294,20 @@ function goToProduct(slug) {
   router.push(`/products/profile/${slug}`);
 }
 
-function updatePaginatedProducts() {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  paginatedProducts.value = products.value.slice(start, end);
-}
 
-function nextPage() {
+async function nextPage() {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
-    updatePaginatedProducts();
+    updateUrlPage();
+    await loadProducts();
   }
 }
 
-function prevPage() {
+async function prevPage() {
   if (currentPage.value > 1) {
     currentPage.value--;
-    updatePaginatedProducts();
+    updateUrlPage();
+    await loadProducts();
   }
 }
 

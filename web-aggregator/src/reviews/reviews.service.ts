@@ -53,9 +53,9 @@ export class ReviewsService {
          return newReview;
      }
 
-     async deleteReviewById(userId:string, role:RoleEnum,id:string){
+     async deleteReviewById(userId:string, role:RoleEnum,reviewId:string){
 
-         const review = await this.reviews.findById(id);
+         const review = await this.reviews.findById(reviewId);
 
          if (!review) {
              throw new NotFoundException("Review not found");
@@ -65,7 +65,7 @@ export class ReviewsService {
              throw new ForbiddenException("You cannot delete this review. It does not belong to you!");
          }
 
-         await this.reviews.deleteOne({_id:id})
+         await this.reviews.deleteOne({_id:reviewId})
 
          return {success:"true", message:"The review has been successfully deleted"}
      }
@@ -108,7 +108,14 @@ export class ReviewsService {
          if(!userId){
              throw new NotFoundException("User not found");
          }
-         const reviews = await this.reviews.find({userId:userId})
+         const reviews = await this.reviews.find({ userId: userId })
+             .populate({
+                 path: 'unitedProduct',
+                 populate: {
+                     path: 'sources', // Популяция поля 'sources' внутри 'unitedProduct'
+                     model: 'ScrapedProducts',  // Здесь указывается модель для 'sources', например 'Source' или другая модель, которая соответствует этому полю
+                 }
+             });
 
          return reviews;
      }

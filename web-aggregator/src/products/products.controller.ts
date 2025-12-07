@@ -47,6 +47,11 @@ export class ProductsController {
         return this.restProductService.getAllUnitedProducts(query);
     }
 
+    @Get("search")
+    async getSearchedProducts(@Query(new TransformNestQueryPipe()) query: any) {
+        return this.restProductService.getSearchedProducts(query)
+    }
+
     @Get('profile/:slug')
     async getUnitedProductBySlug(@Param('slug') slug: string) {
         return this.restProductService.getUnitedProductBySlug(slug);

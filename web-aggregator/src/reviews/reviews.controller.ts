@@ -38,12 +38,11 @@ export class ReviewsController {
   }
 
   @Authorization()
-  @Delete("delete-review/:id")
-  async deleteReview(@Req() req:Request,@Param('id') id:string){
+  @Delete("delete-review/:reviewId")
+  async deleteReview(@Req() req:Request,@Param('reviewId') reviewId:string){
     const currentUser = req.user as User;
-    return await this.reviewsService.deleteReviewById(currentUser.id, currentUser.role,id)
+    return await this.reviewsService.deleteReviewById(currentUser.id, currentUser.role,reviewId)
   }
-
 
   @Authorization()
   @Get("user-reviews")
@@ -52,9 +51,6 @@ export class ReviewsController {
     const currentUser = req.user as User
     return await this.reviewsService.getUsersReviews(currentUser.id);
   }
-
-
-
 
   // Always last due to slug!!!
   @UseInterceptors(UserPopulatingInterceptor)

@@ -259,11 +259,11 @@ const requestGeolocation = () => {
           });
         },
         (error) => {
-          console.log('[v0] Пользователь отказал в доступе к геолокации или произошла ошибка:', error.message)
+          console.log('[v0] Users restricted using geo:', error.message)
         }
     )
   } else {
-    console.log('[v0] Геолокация не поддерживается этим браузером')
+    console.log('[v0] Browser does not handle using geo')
   }
 }
 

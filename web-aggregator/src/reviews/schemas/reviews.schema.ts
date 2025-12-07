@@ -40,7 +40,15 @@ export class Review {
 export const ReviewSchema = SchemaFactory.createForClass(Review);
 
 ReviewSchema.pre(/^find/, function (this: any, next: NextFunction) {
-    this.populate("unitedProduct", {__v: 0}).select({__v: 0});
+    this.populate({
+        path: 'unitedProduct',
+        select: { __v: 0 },
+        populate: {
+            path: 'sources',
+            select: { __v: 0 }
+        }
+    }).select({ __v: 0 });
+
     next();
 });
 

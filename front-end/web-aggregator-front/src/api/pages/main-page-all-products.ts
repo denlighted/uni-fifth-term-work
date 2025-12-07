@@ -1,5 +1,5 @@
 import api from "../axios";
 
-export function getAllUnitedProducts(){
-    return api.get('products/all-united-products')
+export function getAllUnitedProducts(params:any){
+    return api.get('products/all-united-products',{params})
 }

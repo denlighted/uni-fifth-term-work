@@ -17,16 +17,109 @@ export class RestProductService {
         return await this.unitedCategories.find().populate('sources');
     }
 
-    async getAllUnitedProducts(queryDto:any){
-        const query = this.unitedProducts.find().populate('unitedCategory sources');
+    async getAllUnitedProducts(queryDto: any) {
+        const { search, country } = queryDto;
+        let searchIds: any[] | null = null;
 
-        return new QueryBuilder(queryDto,query)
+        if (search) {
+            const searchResults = await this.unitedProducts.aggregate([
+                {
+                    $search: {
+                        index: 'productsIndex',
+                        text: {
+                            query: search,
+                            path: ['name', 'brand', 'normalizedName', 'slug'],
+                            fuzzy: { maxEdits: 1 }
+                        },
+                    },
+                },
+                { $project: { _id: 1 } }
+            ]);
+
+            searchIds = searchResults.map(item => item._id);
+        }
+
+
+        if (search && searchIds && searchIds.length === 0) {
+            return { data: [], totalItems: 0, totalPages: 0, page: queryDto.page || 1 };
+        }
+
+        const baseFilter = {
+            ...(queryDto.brand && { 'brand': queryDto.brand }),
+            ...(searchIds !== null && { _id: { $in: searchIds },
+            ...(country && { 'sources.productInfo.Країна': country })})
+        };
+
+        const totalItems = await this.unitedProducts.countDocuments(baseFilter);
+
+        const query = this.unitedProducts.find(baseFilter).populate('unitedCategory sources');
+
+        const builderDto = { ...queryDto };
+
+        delete builderDto.search;
+        delete builderDto.brand;
+
+        const products = await new QueryBuilder(builderDto, query)
             .filter()
             .sorting()
             .pagination()
-            .limiting()
             .build();
+
+        const limit = queryDto.limit || 50;
+        const totalPages = Math.ceil(totalItems / limit);
+
+        return {
+            data: products,
+            totalItems,
+            totalPages,
+            page: queryDto.page || 1
+        };
     }
+
+    async getSearchedProducts(queryDto: any) {
+        const { search = '', limit = 50, page = 1 } = queryDto;
+        const skip = (page - 1) * limit;
+
+        const pipeline: any[] = [];
+        if (search) {
+            pipeline.push({
+                $search: {
+                    index: 'productsIndex',
+                    text: {
+                        query: search,
+                        path: ['name', 'brand', 'normalizedName', 'slug'],
+                        fuzzy: {
+                            maxEdits: 1
+                        }
+                    },
+                },
+            });
+        } else {
+            pipeline.push({ $sort: { createdAt: -1 } });
+        }
+
+
+        pipeline.push({
+            $facet: {
+                metadata: [{ $count: 'total' }],
+                data: [{ $skip: skip }, { $limit: limit }],
+            },
+        });
+
+        const result = await this.unitedProducts.aggregate(pipeline);
+
+        const data = result[0].data;
+        const total = result[0].metadata.length > 0 ? result[0].metadata[0].total : 0;
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data,
+            totalItems: total,
+            totalPages,
+            page,
+        };
+    }
+
 
 
 

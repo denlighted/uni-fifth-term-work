@@ -21,12 +21,12 @@
       <aside class="sidebar">
         <nav class="sidebar-nav">
           <a href="#" class="nav-item active" @click.prevent="router.push('/profile')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 1v6m0 6v6m8.66-13.66l-4.24 4.24m-4.24 4.24L3.52 22.48M23 12h-6m-6 0H1m19.66 8.66l-4.24-4.24m-4.24-4.24L3.52 1.52"/>
-          </svg>
-          SETTINGS
-        </a>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6m8.66-13.66l-4.24 4.24m-4.24 4.24L3.52 22.48M23 12h-6m-6 0H1m19.66 8.66l-4.24-4.24m-4.24-4.24L3.52 1.52"/>
+            </svg>
+            SETTINGS
+          </a>
           <a href="#" class="nav-item" @click.prevent="router.push('/cheapest-basket')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -56,11 +56,6 @@
         <div class="reviews-section">
           <div class="reviews-header">
             <h2 class="reviews-title">My Reviews</h2>
-            <select v-model="filterOption" class="filter-select">
-              <option value="all">All reviews</option>
-              <option value="products">Product reviews</option>
-              <option value="stores">Store reviews</option>
-            </select>
           </div>
 
           <!-- Reviews List -->
@@ -69,18 +64,25 @@
               <!-- Product Info -->
               <div class="review-product-info">
                 <div class="product-image-small">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="placeholder-icon">
+                  <img
+                      v-if="review.image"
+                      :src="review.image"
+                      :alt="review.productName"
+                      class="real-product-image"
+                  />
+
+                  <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="placeholder-icon">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <circle cx="8.5" cy="8.5" r="1.5"></circle>
                     <polyline points="21 15 16 10 5 21"></polyline>
                   </svg>
                 </div>
                 <div class="product-details">
-                  <h3 class="product-name">{{ review.productName }}</h3>
-                  <div class="review-type-badge" :class="review.type">
-                    {{ review.type === 'product' ? 'Product Review' : 'Store Review' }}
-                  </div>
-                  <div v-if="review.storeName" class="store-name">Store: {{ review.storeName }}</div>
+                  <h3 class="product-name"
+                      @click="router.push(`/products/profile/${review.slug}`)"
+                      style="cursor: pointer;">
+                    {{ review.productName }}
+                  </h3>
                 </div>
               </div>
 
@@ -105,7 +107,7 @@
                   </div>
                 </div>
 
-                <p class="review-text">{{ review.text }}</p>
+                <p class="review-text">{{ review.review }}</p>
 
                 <!-- Review Stats -->
                 <div class="review-stats">
@@ -155,77 +157,82 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit Review Modal -->
+    <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Review</h3>
+          <button class="modal-close" @click="closeEditModal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Rating Selection -->
+          <div class="form-group">
+            <label class="form-label">Rating</label>
+            <div class="rating-select">
+              <svg
+                  v-for="star in 5"
+                  :key="star"
+                  class="star-icon-large"
+                  :class="{ filled: star <= editForm.rating }"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  @click="setEditRating(star)"
+              >
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Review Text -->
+          <div class="form-group">
+            <label class="form-label">Review</label>
+            <textarea
+                v-model="editForm.review"
+                class="form-textarea"
+                rows="6"
+                placeholder="Write your review here..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="modal-btn cancel-btn" @click="closeEditModal">Cancel</button>
+          <button class="modal-btn save-btn" @click="saveEditedReview">Save Changes</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import router from "@/router/index.js";
+import { getUserProfile } from "@/api/profiles/user-profile.js";
+import { getUsersReviews } from "@/api/reviews/get-users-reviews.js";
+import {deleteUsersReview} from "@/api/reviews/delete-review.js";
+import {changeReview} from "@/api/reviews/change-review.js";
 
-const user = ref({
-  firstName: 'DENIS'
+const user = ref(null)
+const filterOption = ref('all')
+const reviews = ref([])
+
+const showEditModal = ref(false)
+const editingReview = ref(null)
+const editForm = ref({
+  rating: 0,
+  review: ''
 })
 
-const filterOption = ref('all')
-
-const reviews = ref([
-  {
-    id: 1,
-    productName: 'Product 1',
-    storeName: 'Store 1',
-    type: 'product',
-    rating: 5,
-    date: '2024-01-15',
-    text: 'Excellent product! Great quality and fast delivery. Highly recommend to everyone looking for this type of product. Very satisfied with my purchase.',
-    likes: 24,
-    dislikes: 2
-  },
-  {
-    id: 2,
-    productName: 'Product 2',
-    storeName: 'Store 2',
-    type: 'store',
-    rating: 4,
-    date: '2024-01-10',
-    text: 'Good store overall, but the delivery could be faster. Still satisfied with the service and product quality.',
-    likes: 15,
-    dislikes: 1
-  },
-  {
-    id: 3,
-    productName: 'Product 3',
-    storeName: 'Store 1',
-    type: 'product',
-    rating: 5,
-    date: '2024-01-08',
-    text: 'Perfect! Exactly what I was looking for. Will definitely buy again from this store.',
-    likes: 32,
-    dislikes: 0
-  },
-  {
-    id: 4,
-    productName: 'Product 4',
-    storeName: 'Store 3',
-    type: 'product',
-    rating: 3,
-    date: '2024-01-05',
-    text: 'Average product. It works but nothing special. Expected more for the price point.',
-    likes: 8,
-    dislikes: 5
-  },
-  {
-    id: 5,
-    productName: 'Product 5',
-    storeName: 'Store 2',
-    type: 'store',
-    rating: 4,
-    date: '2024-01-02',
-    text: 'Great customer service! They responded quickly to my questions and resolved all issues.',
-    likes: 19,
-    dislikes: 1
-  }
-])
-
+// Фильтрация (работает без изменений)
 const filteredReviews = computed(() => {
   if (filterOption.value === 'all') {
     return reviews.value
@@ -235,27 +242,118 @@ const filteredReviews = computed(() => {
   )
 })
 
+onMounted(async () => {
+  await getUser();
+  await loadReviews();
+});
+
+const loadReviews = async () => {
+  try {
+    const response = await getUsersReviews();
+
+    reviews.value = response.data.map(rev => {
+      return {
+        id: rev._id, //
+        productName: rev.unitedProduct?.name || 'Unknown Product',
+        review: rev.review,
+        rating: rev.rating,
+        date: rev.createdAt, // Backend: createdAt -> Frontend: date
+        image: rev.unitedProduct?.sources[0].imageLink,
+
+        type: 'product',
+        storeName: null,
+
+
+        slug: rev.unitedProduct?.slug
+      }
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
 const formatDate = (dateStr) => {
+  if (!dateStr) return '';
   const date = new Date(dateStr)
-  const options = { year: 'numeric', month: 'long', day: 'numeric' }
+  const options = {year: 'numeric', month: 'long', day: 'numeric'}
   return date.toLocaleDateString('en-US', options)
 }
 
-const editReview = (reviewId) => {
-  console.log('Edit review:', reviewId)
-  // Implement edit functionality
+const editReview = async (reviewId) => {
+  const foundReview = reviews.value.find(r => r.id === reviewId);
+  if (foundReview) {
+    editingReview.value = foundReview; // Сохраняем ссылку на редактируемый объект
+
+    // Заполняем форму текущими данными
+    editForm.value = {
+      rating: foundReview.rating,
+      review: foundReview.review
+    };
+    showEditModal.value = true;
+  }
 }
 
-const deleteReview = (reviewId) => {
-  const index = reviews.value.findIndex(r => r.id === reviewId)
-  if (index !== -1) {
-    reviews.value.splice(index, 1)
+const setEditRating = (rating) => {
+  editForm.value.rating = rating
+}
+
+const saveEditedReview = async () => {
+  if (!editingReview.value) return;
+  try {
+    await changeReview(editingReview.value.id, editForm.value);
+
+    const index = reviews.value.findIndex(r => r.id === editingReview.value.id);
+    if (index !== -1) {
+      reviews.value[index].rating = editForm.value.rating;
+      reviews.value[index].review = editForm.value.review;
+    }
+
+    closeEditModal();
+
+  } catch (error) {
+    console.error("Failed to update review:", error);
+    alert("Error updating review");
+  }
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+  editingReview.value = null
+  editForm.value = {rating: 0, review: ''}
+}
+
+const deleteReview = async (reviewId) => {
+  // Хорошая практика: спросить подтверждение перед удалением
+  if (!confirm('Are you sure you want to delete this review?')) return;
+
+  try {
+
+    await deleteUsersReview(reviewId);
+
+    const index = reviews.value.findIndex(r => r.id === reviewId);
+    if (index !== -1) {
+      reviews.value.splice(index, 1);
+    }
+
+  } catch (error) {
+    console.error("Failed to delete review:", error);
+    alert("Error deleting review"); // Сообщаем пользователю об ошибке
+  }
+}
+
+async function getUser() {
+  try {
+    const response = await getUserProfile()
+    user.value = response.data
+  } catch (e) {
+    console.error(e)
   }
 }
 
 const handleLogout = () => {
   console.log('Logout')
-  // Implement logout functionality
+  router.push('/login'); // Пример логаута
 }
 </script>
 
@@ -473,6 +571,13 @@ const handleLogout = () => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.real-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 .placeholder-icon {
@@ -696,6 +801,202 @@ const handleLogout = () => {
   .product-image-small {
     width: 100%;
     height: 120px;
+  }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #1f2937;
+}
+
+.modal-close svg {
+  width: 24px;
+  height: 24px;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.rating-select {
+  display: flex;
+  gap: 8px;
+}
+
+.star-icon-large {
+  width: 32px;
+  height: 32px;
+  fill: #e5e7eb;
+  stroke: #d1d5db;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.star-icon-large:hover {
+  transform: scale(1.1);
+}
+
+.star-icon-large.filled {
+  fill: #fbbf24;
+  stroke: #fbbf24;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #374151;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn {
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.cancel-btn:hover {
+  background-color: #f9fafb;
+}
+
+.save-btn {
+  background-color: #2d2d2d;
+  color: white;
+}
+
+.save-btn:hover {
+  background-color: #1f1f1f;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 16px;
+  }
+
+  .star-icon-large {
+    width: 28px;
+    height: 28px;
   }
 }
 </style>
