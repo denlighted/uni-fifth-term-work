@@ -51,10 +51,24 @@
           </a>
           <a href="#" class="nav-item" @click.prevent="router.push('/favorites')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            FAVORITES
+          </a>
+          <a
+              v-if="user?.role === 'ADMIN'"
+              href="#"
+              class="nav-item"
+              @click.prevent="router.push('/admin-page')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="1" y="4" width="22" height="16" rx="2"/>
               <path d="M1 10h22"/>
             </svg>
-            FAVORITES
+            ADMIN-PANEL
           </a>
         </nav>
       </aside>

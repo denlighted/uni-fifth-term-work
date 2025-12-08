@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Param, Post, Query, UsePipes, ValidationPipe} from '@nestjs/common';
+import {Body, Controller, Delete, Get, Param, Post, Query, UsePipes, ValidationPipe} from '@nestjs/common';
 import {ProductsService} from './services/products.service';
 import type {PrivateBrandsRequest} from "./dto";
 import {RestProductService} from "./services/rest-products.service";
@@ -6,6 +6,8 @@ import {ParseObjectIdPipe} from "@nestjs/mongoose";
 import {BaseQueryDto} from "../common/dto/query.dto";
 import {ProductFilterDto} from "../common/dto/product-filter.dto";
 import {TransformNestQueryPipe} from "../common/pipes/transform-nested-query.pipe";
+import {Authorization} from "../auth/decorators";
+import {RoleEnum} from "@prisma/client";
 
 
 @Controller('products')
@@ -19,7 +21,7 @@ export class ProductsController {
         return this.productsService.normalizeCategories()
     }
 
-    @Post("get-same-pages")
+    @Post("get-same-products")
     async getNormalizedProducts() {
         return this.productsService.normalizeProducts()
     }
@@ -60,6 +62,18 @@ export class ProductsController {
     @Get('id/:id')
     async getUnitedProductById(@Param('id', new ParseObjectIdPipe()) id: string) {
         return this.restProductService.getUnitedProductById(id);
+    }
+
+    @Delete("product-delete/:productId")
+    @Authorization(RoleEnum.ADMIN)
+    async deleteProductById(@Param('productId') productId: string) {
+        return this.restProductService.deleteProductById(productId)
+    }
+
+    @Delete("clear-matched-products")
+    @Authorization(RoleEnum.ADMIN)
+    async deleteAllMatchedProds(){
+        return this.restProductService.deleteAllMatchedProds();
     }
 
     /// Test method for brand checking

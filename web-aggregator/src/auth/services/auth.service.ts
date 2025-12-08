@@ -20,7 +20,7 @@ import {ForgotPasswordRequest} from "../dto";
 import * as crypto from "node:crypto";
 import {ResetPasswordRequest} from "../dto";
 import {GooglePayload} from "../interfaces/google-oatuh.interface.jwt";
-import type{UpdateRoleRequest} from "../dto";
+import {UpdateRoleRequest} from "../dto";
 import {User} from "@prisma/client";
 import {UpdateProfileRequest} from "../dto";
 import {JwtPayload} from "../interfaces";
@@ -377,7 +377,7 @@ export class AuthService {
 
     }
 
-    async getPrivilage(dto:UpdateRoleRequest) {
+    async getPrivilege(dto:UpdateRoleRequest) {
         const { id, email } = dto;
 
         const user =

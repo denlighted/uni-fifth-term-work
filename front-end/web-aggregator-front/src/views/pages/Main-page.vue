@@ -45,6 +45,7 @@
           <div class="input-wrapper">
             <Search class="input-icon" :size="18"/>
             <input
+                v-model="searchCategory"
                 type="text"
                 placeholder="Select a category"
                 class="search-input"
@@ -190,6 +191,7 @@ const user = ref(null)
 const currentPage = ref(Number(route.query.page) || 1);
 const totalPages = ref(1);
 const searchQuery = ref(route.query.search || '');
+const searchCategory = ref(route.query.search || '')
 
 let isCarted = ref(false);
 let isFavorite = ref(false);

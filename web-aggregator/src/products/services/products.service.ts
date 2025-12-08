@@ -45,7 +45,6 @@ export class ProductsService {
             .trim();
     }
 
-    // Словарь синонимов для «глубоких» совпадений
     private synonyms: Record<string, string[]> = {
         "Хліб та випічка": ["Хлібобулочні вироби"],
         "Фрукти, овочі та соління": ["Овочі та фрукти"],
@@ -62,7 +61,6 @@ export class ProductsService {
         const foraCategories = await this.category.find({ store: "Fora" });
         const atbCategoriesRaw = await this.category.find({ store: "ATB" });
 
-        // Нормалізуємо ATB категорії
         const atbCategories = atbCategoriesRaw.map(cat => ({
             ...cat.toObject(),
             normalizedName: this.normalizeName(cat.name)

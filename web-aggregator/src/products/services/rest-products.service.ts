@@ -5,6 +5,7 @@ import {Model} from "mongoose";
 import {QueryBuilder} from "../../utils/query-builder";
 import {ProductFilterDto} from "../../common/dto/product-filter.dto";
 import {BaseQueryDto} from "../../common/dto/query.dto";
+import {RoleEnum} from "@prisma/client";
 
 @Injectable()
 
@@ -45,9 +46,9 @@ export class RestProductService {
         }
 
         const baseFilter = {
-            ...(queryDto.brand && { 'brand': queryDto.brand }),
-            ...(searchIds !== null && { _id: { $in: searchIds },
-            ...(country && { 'sources.productInfo.Країна': country })})
+            ...(queryDto.brand && { brand: queryDto.brand }),
+            ...(searchIds !== null && { _id: { $in: searchIds } }),
+            ...(country && { 'sources.productInfo.Країна': country })
         };
 
         const totalItems = await this.unitedProducts.countDocuments(baseFilter);
@@ -148,5 +149,9 @@ export class RestProductService {
 
     async deleteProductById(id:string){
         return this.unitedProducts.deleteOne({_id: id});
-}
+    }
+
+    async deleteAllMatchedProds(){
+        return this.unitedProducts.deleteMany({});
+    }
 }

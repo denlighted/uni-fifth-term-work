@@ -8,7 +8,7 @@ export class RestUserService {
     constructor(private readonly prismaService: PrismaService) {
     }
 
-    async getAllusers(): Promise<User[]> {
+    async getAllUsers(): Promise<User[]> {
         return await this.prismaService.user.findMany({where:{isActive:true}});
     }
 
@@ -21,7 +21,7 @@ export class RestUserService {
         return user;
     }
 
-    async deleteOne(id: string): Promise<void> {
+    async deleteUser(id: string): Promise<void> {
         const user = await this.prismaService.user.findUnique({where: {id}});
 
         if(!user){

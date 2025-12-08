@@ -49,6 +49,7 @@ import { ref, computed } from 'vue'
 import {resetPassword} from "@/api/auth/reset-password.js";
 import {useRoute} from "vue-router";
 import router from "@/router/index.js";
+import {useNotificationStore} from "@/components/notification.js";
 
 const resetForm = ref({
   password: '',
@@ -57,6 +58,7 @@ const resetForm = ref({
 
 const route = useRoute();
 const token = route.query.token;
+const notification = useNotificationStore();
 
 const showError = computed(() => {
   return resetForm.value.passwordConfirm.length > 0 &&
@@ -81,7 +83,7 @@ const handleResetPassword = async () => {
 
     const response = await resetPassword(token,data);
     console.log('Your password has been changed successfully:', response.data);
-    alert("Your password has been changed successfully. Redirection to Login page...");
+    notification.show("Your password has been changed successfully. Redirection to Login page...",'success')
     setTimeout(() => {
       router.push('/auth/login');
     }, 1500);
@@ -89,7 +91,7 @@ const handleResetPassword = async () => {
   }
   catch (error){
     console.error('Password reset failed:', error)
-    alert('Password reset failed! Please check your details.')
+    notification.show('Password reset failed! Please check your details.','error');
   }
 }
 </script>

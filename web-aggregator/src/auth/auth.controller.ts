@@ -23,7 +23,7 @@ import {ResetPasswordRequest} from "./dto";
 import {AuthGuard} from "@nestjs/passport";
 import {GooglePayload} from "./interfaces/google-oatuh.interface.jwt";
 import {RoleEnum} from "./enums";
-import  type {UpdateRoleRequest} from "./dto";
+import  {UpdateRoleRequest} from "./dto";
 import {RestUserService} from "./services/rest-user.service";
 import {ConfigService} from "@nestjs/config";
 import {UserPopulatingInterceptor} from "../common/interceptors/user-populating.interceptor";
@@ -91,7 +91,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @Authorization(RoleEnum.ADMIN)
     async makeAdmin(@Body() dto: UpdateRoleRequest) {
-        return this.authService.getPrivilage(dto);
+        return this.authService.getPrivilege(dto);
     }
 
     @Patch('change-password')
@@ -158,6 +158,13 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async getUserById(@Param('id') id: string){
         return this.restUserService.getUserById(id)
+    }
+
+    @Delete('users/delete-one/:userId')
+    @Authorization(RoleEnum.ADMIN)
+    @HttpCode(HttpStatus.OK)
+    async deleteUser(@Param("userId") userId:string){
+        return this.restUserService.deleteUser(userId)
     }
 
 }

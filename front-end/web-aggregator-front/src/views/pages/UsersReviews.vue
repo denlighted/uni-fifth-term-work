@@ -29,8 +29,9 @@
           </a>
           <a href="#" class="nav-item" @click.prevent="router.push('/cheapest-basket')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <path d="M9 3v18"/>
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
             </svg>
             MY PRODUCT CART
           </a>
@@ -42,8 +43,10 @@
           </a>
           <a href="#" class="nav-item" @click.prevent="router.push('/favorites')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="1" y="4" width="22" height="16" rx="2"/>
-              <path d="M1 10h22"/>
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
             </svg>
             FAVORITES
           </a>
@@ -220,6 +223,7 @@ import { getUserProfile } from "@/api/profiles/user-profile.js";
 import { getUsersReviews } from "@/api/reviews/get-users-reviews.js";
 import {deleteUsersReview} from "@/api/reviews/delete-review.js";
 import {changeReview} from "@/api/reviews/change-review.js";
+import {useNotificationStore} from "@/components/notification.js";
 
 const user = ref(null)
 const filterOption = ref('all')
@@ -231,6 +235,8 @@ const editForm = ref({
   rating: 0,
   review: ''
 })
+
+const notification = useNotificationStore();
 
 // Фильтрация (работает без изменений)
 const filteredReviews = computed(() => {
@@ -308,12 +314,13 @@ const saveEditedReview = async () => {
       reviews.value[index].rating = editForm.value.rating;
       reviews.value[index].review = editForm.value.review;
     }
-
+    notification.show("Review has been changed successfully",'success')
     closeEditModal();
+
 
   } catch (error) {
     console.error("Failed to update review:", error);
-    alert("Error updating review");
+    notification.show("Error updating review",'error')
   }
 }
 
@@ -338,7 +345,7 @@ const deleteReview = async (reviewId) => {
 
   } catch (error) {
     console.error("Failed to delete review:", error);
-    alert("Error deleting review"); // Сообщаем пользователю об ошибке
+    notification.show("Error deleting review",'error')
   }
 }
 
@@ -598,30 +605,6 @@ const handleLogout = () => {
   font-weight: 700;
   color: #1f2937;
   margin: 0;
-}
-
-.review-type-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  width: fit-content;
-}
-
-.review-type-badge.product {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.review-type-badge.store {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.store-name {
-  font-size: 14px;
-  color: #6b7280;
 }
 
 /* Review Content */

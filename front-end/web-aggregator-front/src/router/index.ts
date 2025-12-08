@@ -12,6 +12,7 @@ import FavoritesPage from "../views/pages/FavoritesPage.vue";
 import CheapestBasket from "../views/pages/CheapestBasket.vue";
 import AuthRequiresDialog from "../components/UI/AuthRequiresDialog.vue";
 import UsersReviews from "../views/pages/UsersReviews.vue";
+import AdminPage from "../views/pages/AdminPage.vue";
 
 
 const routes = [
@@ -72,6 +73,12 @@ const routes = [
       path:"/users/reviews",
       name:"user-reviews",
       component:UsersReviews
+    },
+
+    {
+        path:"/admin-page",
+        name:"admin-page",
+        component:AdminPage
     },
 
     {

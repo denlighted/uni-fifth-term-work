@@ -18,7 +18,8 @@ export class UserInfoInterceptor  implements NestInterceptor {
                     lastName: user.lastName,
                     pictureUrl:user.pictureUrl,
                     address:user.address,
-                    phoneNumber:user.phoneNumber
+                    phoneNumber:user.phoneNumber,
+                    role: user.role,
                 };
             }),
         );
