@@ -19,17 +19,45 @@ export class RestProductService {
     }
 
     async getAllUnitedProducts(queryDto: any) {
-        const { search, country } = queryDto;
-        let searchIds: any[] | null = null;
+        const { search, category, country } = queryDto;
 
+        let searchProductIds: any[] | null = null;
+        let foundCategoryIds: any[] | null = null;
+
+        // Atlas search by prods
         if (search) {
             const searchResults = await this.unitedProducts.aggregate([
                 {
                     $search: {
-                        index: 'productsIndex',
+                        index: "productsIndex",
                         text: {
                             query: search,
-                            path: ['name', 'brand', 'normalizedName', 'slug'],
+                            path: ["name", "brand", "normalizedName", "slug"],
+                            fuzzy: { maxEdits: 1 }
+                        },
+                    },
+                },
+                { $project: { _id: 1 } }
+            ]);
+            searchProductIds = searchResults.map(r => r._id);
+
+
+            if (searchProductIds.length === 0) {
+                return { data: [], totalItems: 0, totalPages: 0, page: 1 };
+            }
+        }
+
+        // search with atlas search by prods
+        if (category) {
+
+
+            const categoryResults = await this.unitedCategories.aggregate([
+                {
+                    $search: {
+                        index: "categoryIndex",
+                        text: {
+                            query: category,
+                            path: "name",
                             fuzzy: { maxEdits: 1 }
                         },
                     },
@@ -37,28 +65,42 @@ export class RestProductService {
                 { $project: { _id: 1 } }
             ]);
 
-            searchIds = searchResults.map(item => item._id);
+            foundCategoryIds = categoryResults.map(c => c._id);
+
+            if (foundCategoryIds.length === 0) {
+                return { data: [], totalItems: 0, totalPages: 0, page: 1 };
+            }
         }
 
 
-        if (search && searchIds && searchIds.length === 0) {
-            return { data: [], totalItems: 0, totalPages: 0, page: queryDto.page || 1 };
+        const baseFilter: any = {};
+
+
+        if (searchProductIds) {
+            baseFilter._id = { $in: searchProductIds };
         }
 
-        const baseFilter = {
-            ...(queryDto.brand && { brand: queryDto.brand }),
-            ...(searchIds !== null && { _id: { $in: searchIds } }),
-            ...(country && { 'sources.productInfo.Країна': country })
-        };
 
+
+        if (foundCategoryIds) {
+            baseFilter.unitedCategory = { $in: foundCategoryIds };
+        }
+
+        // Фильтр по стране
+        if (country) {
+            baseFilter["sources.productInfo.Країна"] = country;
+        }
+
+        // --- 4. Запрос и Пагинация
         const totalItems = await this.unitedProducts.countDocuments(baseFilter);
 
-        const query = this.unitedProducts.find(baseFilter).populate('unitedCategory sources');
+        const query = this.unitedProducts
+            .find(baseFilter)
+            .populate("unitedCategory sources");
 
         const builderDto = { ...queryDto };
-
         delete builderDto.search;
-        delete builderDto.brand;
+        delete builderDto.category;
 
         const products = await new QueryBuilder(builderDto, query)
             .filter()

@@ -54,36 +54,6 @@
       <!-- Content Area -->
       <div class="content-wrapper">
         <!-- Search Section -->
-        <div class="search-section">
-          <div class="search-header">
-            <h2 class="section-title">Price Aggregator</h2>
-            <div class="city-selector-dropdown">
-              <MapPin :size="20" />
-              <select v-model="selectedCity" class="city-select">
-                <option value="Kyiv">Kyiv</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="search-inputs">
-            <div class="input-wrapper">
-              <Search class="input-icon" :size="18" />
-              <input
-                  type="text"
-                  placeholder="Enter the product name"
-                  class="search-input"
-              />
-            </div>
-            <div class="input-wrapper">
-              <Search class="input-icon" :size="18" />
-              <input
-                  type="text"
-                  placeholder="Select a category"
-                  class="search-input"
-              />
-            </div>
-          </div>
-        </div>
 
         <!-- Basket Section -->
         <div class="basket-wrapper">

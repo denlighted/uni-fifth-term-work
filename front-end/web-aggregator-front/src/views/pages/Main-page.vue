@@ -89,24 +89,28 @@
               <!-- Image carousel -->
               <div class="product-image" @click="goToProduct(product.slug)">
                 <button class="nav-btn left" @click.stop="prevImage(product._id)">&lt;</button>
-                <transition name="fade" mode="out-in">
+
+                <div class="images-stack">
                   <img
-                      v-if="product.images && product.images.length"
-                      :key="currentImageIndex[product._id]"
-                      :src="product.images[currentImageIndex[product._id]]"
+                      v-for="(img, index) in product.images"
+                      :key="img"
+                      :src="img"
                       alt="Product Image"
                       class="image"
+                      :class="{ active: currentImageIndex[product._id] === index }"
+                      loading="lazy"
                   />
-                </transition>
+                </div>
+
                 <button class="nav-btn right" @click.stop="nextImage(product._id)">&gt;</button>
-                <!-- Dots -->
+
                 <div class="dots" v-if="product.images && product.images.length > 1">
-                  <span
-                      v-for="(img, index) in product.images"
-                      :key="index"
-                      :class="['dot', { active: currentImageIndex[product._id] === index }]"
-                      @click.stop="goToImage(product._id, index)"
-                  ></span>
+    <span
+        v-for="(img, index) in product.images"
+        :key="index"
+        :class="['dot', { active: currentImageIndex[product._id] === index }]"
+        @click.stop="goToImage(product._id, index)"
+    ></span>
                 </div>
               </div>
 
@@ -200,15 +204,11 @@ const selectedCity = ref('Kyiv')
 
 
 let searchTimeout = null;
+let categoryTimeout = null;
 
 const goToLogin = () => router.push('/auth/login')
 const goToRegister = () => router.push('/auth/register')
 
-
-onMounted(async () => {
-  await  loadProducts();
-  await  getUser()
-});
 
 
 watch(searchQuery, () => {
@@ -216,6 +216,16 @@ watch(searchQuery, () => {
   clearTimeout(searchTimeout);
 
   searchTimeout = setTimeout(() => {
+    currentPage.value = 1;
+    updateUrlPage();
+    loadProducts();
+  }, 500);
+});
+
+watch(searchCategory, () => {
+  clearTimeout(categoryTimeout);
+
+  categoryTimeout = setTimeout(() => {
     currentPage.value = 1;
     updateUrlPage();
     loadProducts();
@@ -243,7 +253,7 @@ async function loadProducts() {
   try {
 
 
-    const response = await getAllUnitedProducts({ page: currentPage.value, search:searchQuery.value });
+    const response = await getAllUnitedProducts({ page: currentPage.value, search:searchQuery.value, category:searchCategory.value });
 
     const items = response.data.data;
 
@@ -267,8 +277,12 @@ async function loadProducts() {
 }
 
 function updateUrlPage() {
-  router.push({
-    query: { page: currentPage.value }
+  router.replace({
+    query: {
+      page: currentPage.value,
+      search: searchQuery.value || undefined,
+      category: searchCategory.value || undefined,
+    },
   });
 }
 
@@ -335,6 +349,11 @@ async function toggleFavorite(productId) {
     console.log("Something goes wrong", error);
   }
 }
+
+onMounted(async () => {
+  await  loadProducts();
+  await  getUser()
+});
 
 
 </script>
@@ -624,20 +643,41 @@ async function toggleFavorite(productId) {
 
 .product-image {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #e5e7eb;
-  padding: 8px;
-  cursor: pointer;
+  width: 100%;
+  height: 220px; /* Оптимальная высота для карточки */
+  overflow: hidden;
+  background-color: #fff; /* Лучше белый фон для товаров, но можно и серый #f3f4f6 */
+  border-radius: 8px; /* Скругление углов самого контейнера */
 }
 
-.product-image img {
-  max-width: 120px;
-  max-height: 120px;
-  object-fit: contain;
-  border-radius: 4px;
+.images-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
+
+.image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  /* САМОЕ ВАЖНОЕ: */
+  object-fit: contain; /* Картинка впишется, сохранив пропорции */
+  padding: 16px;       /* Отступы внутри, чтобы товар не прилипал к краям */
+
+  /* Магия плавности */
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out; /* 0.3s достаточно для плавности */
+  z-index: 1;
+}
+
+.image.active {
+  opacity: 1;
+  z-index: 2;
+}
+
 
 .nav-btn {
   position: absolute;

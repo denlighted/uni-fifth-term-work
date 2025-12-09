@@ -56,49 +56,12 @@
       <!-- Wrapped content in content-area -->
       <div class="content-area">
         <!-- Search Section -->
-        <div class="search-section">
-          <div class="search-header">
-            <h2 class="section-title">Price Aggregator</h2>
-            <div class="city-selector-dropdown">
-              <MapPin :size="20" />
-              <select v-model="selectedCity" class="city-select">
-                <option value="Kyiv">Kyiv</option>
-              </select>
-            </div>
-          </div>
 
-          <div class="search-inputs">
-            <div class="input-wrapper">
-              <Search class="input-icon" :size="18" />
-              <input
-                  type="text"
-                  placeholder="Enter the product name"
-                  class="search-input"
-              />
-            </div>
-            <div class="input-wrapper">
-              <Search class="input-icon" :size="18" />
-              <input
-                  type="text"
-                  placeholder="Select a category"
-                  class="search-input"
-              />
-            </div>
-          </div>
-        </div>
 
         <!-- Favorites Section -->
         <div class="favorites-section">
           <div class="favorites-header">
             <h2 class="favorites-title">Favorite products</h2>
-            <select
-                v-model="sortOrder"
-                class="sort-select"
-            >
-              <option value="date">Date added</option>
-              <option value="name">Product name</option>
-              <option value="price">Price</option>
-            </select>
           </div>
 
           <div class="favorites-grid">
@@ -505,10 +468,10 @@ const handleLogout = async () => {
 }
 
 .favorites-title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   color: #1f2937;
-  margin: 0;
+  margin: 0 0 24px 0;
 }
 
 .sort-select {

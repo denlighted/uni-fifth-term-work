@@ -20,7 +20,8 @@ const routes = [
     {
         path: '/',
         name: 'Home',
-        component: MainPage
+        component: MainPage,
+        meta:{title:"LowPrice.com"}
     },
     {
         path: '/auth/register',
@@ -47,7 +48,7 @@ const routes = [
     path:'/profile',
     name: 'user-profile',
     component: UserProfile,
-    meta:{requiresAuth:true}
+    meta:{requiresAuth:true,title:"User Profile"}
     },
 
     {
