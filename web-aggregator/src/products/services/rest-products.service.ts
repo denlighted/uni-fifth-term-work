@@ -22,13 +22,11 @@ export class RestProductService {
     }
 
     async getAllUnitedProducts(queryDto: any) {
-        // 1. Добавляем brand в деструктуризацию
         const { search, category, country, brand } = queryDto;
 
         let searchProductIds: any[] | null = null;
         let foundCategoryIds: any[] | null = null;
 
-        // --- Atlas Search: Поиск товаров по тексту ---
         if (search) {
             const searchResults = await this.unitedProducts.aggregate([
                 {
@@ -50,7 +48,6 @@ export class RestProductService {
             }
         }
 
-        // --- Atlas Search: Поиск категорий ---
         if (category) {
             const categoryResults = await this.unitedCategories.aggregate([
                 {
@@ -73,7 +70,6 @@ export class RestProductService {
             }
         }
 
-        // --- Сборка основного фильтра ---
         const baseFilter: any = {};
 
         if (searchProductIds) {
@@ -84,16 +80,11 @@ export class RestProductService {
             baseFilter.unitedCategory = { $in: foundCategoryIds };
         }
 
-        // --- 2. ЛОГИКА БРЕНДА (Новое) ---
         if (brand) {
             baseFilter.brand = brand;
         }
 
-        // --- 3. ЛОГИКА СТРАНЫ (Исправлено) ---
         if (country) {
-            // Мы не можем фильтровать "sources.productInfo" напрямую в UnitedProducts,
-            // так как sources - это массив ID (ссылок).
-            // Сначала ищем ID источников, которые относятся к этой стране:
             const sourcesInCountry = await this.scrapedProduct
                 .find({ "productInfo.Країна": country })
                 .select('_id');
@@ -101,22 +92,18 @@ export class RestProductService {
             const sourceIds = sourcesInCountry.map(s => s._id);
 
             if (sourceIds.length === 0) {
-                // Если в этой стране нет источников -> возвращаем пустоту
                 return { data: [], totalItems: 0, totalPages: 0, page: 1 };
             }
 
-            // Ищем товары, у которых есть хотя бы один источник из списка sourceIds
             baseFilter.sources = { $in: sourceIds };
         }
 
-        // --- 4. Запрос и Пагинация ---
         const totalItems = await this.unitedProducts.countDocuments(baseFilter);
 
         const query = this.unitedProducts
             .find(baseFilter)
             .populate("unitedCategory sources");
 
-        // Очистка DTO для QueryBuilder
         const builderDto = { ...queryDto };
         delete builderDto.search;
         delete builderDto.category;
@@ -124,11 +111,14 @@ export class RestProductService {
         delete builderDto.country;
 
         if (queryDto.sort === 'cheap') {
-            builderDto.sort = 'minPrice';
+            // Сначала по цене (возрастание), если цена равна — по ID
+            builderDto.sort = 'minPrice _id';
         } else if (queryDto.sort === 'expensive') {
-            builderDto.sort = '-minPrice';
+            // Сначала по цене (убывание), если цена равна — по ID
+            builderDto.sort = '-minPrice _id';
         } else {
-            builderDto.sort = '-createdAt';
+            // Сначала новые, если время совпадает — по ID
+            builderDto.sort = '-createdAt _id';
         }
 
         if (builderDto.page) builderDto.page = Number(builderDto.page);

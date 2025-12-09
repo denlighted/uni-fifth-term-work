@@ -257,6 +257,7 @@ watch(selectedBrand, () => {
   currentPage.value = 1;
   updateUrlPage();
   loadProducts();
+  scrollToTop();
 });
 
 watch(selectedCountry, () => {
@@ -324,6 +325,7 @@ async function loadProducts() {
 
     if (!items.length && currentPage.value > 1) {
       currentPage.value--;
+      updateUrlPage();
       return await loadProducts();
     }
 
@@ -364,6 +366,7 @@ async function nextPage() {
     currentPage.value++;
     updateUrlPage();
     await loadProducts();
+    scrollToTop()
   }
 }
 
@@ -372,6 +375,7 @@ async function prevPage() {
     currentPage.value--;
     updateUrlPage();
     await loadProducts();
+    scrollToTop()
   }
 }
 
@@ -396,6 +400,13 @@ async function toggleFavorite(productId) {
   catch (error){
     console.log("Something goes wrong", error);
   }
+}
+
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
 }
 
 onMounted(async () => {
