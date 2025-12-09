@@ -49,11 +49,6 @@ export class ProductsController {
         return this.restProductService.getAllUnitedProducts(query);
     }
 
-    @Get("search")
-    async getSearchedProducts(@Query(new TransformNestQueryPipe()) query: any) {
-        return this.restProductService.getSearchedProducts(query)
-    }
-
     @Get('profile/:slug')
     async getUnitedProductBySlug(@Param('slug') slug: string) {
         return this.restProductService.getUnitedProductBySlug(slug);
@@ -62,6 +57,16 @@ export class ProductsController {
     @Get('id/:id')
     async getUnitedProductById(@Param('id', new ParseObjectIdPipe()) id: string) {
         return this.restProductService.getUnitedProductById(id);
+    }
+
+    @Get("unique-brands")
+    async getUniqueBrands(){
+        return this.restProductService.getUniqueBrands();
+    }
+
+    @Get("unique-countries")
+    async getUniqueCountries(){
+        return this.restProductService.getUniqueCountries();
     }
 
     @Delete("product-delete/:productId")

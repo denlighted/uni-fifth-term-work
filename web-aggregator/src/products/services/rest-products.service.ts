@@ -6,12 +6,15 @@ import {QueryBuilder} from "../../utils/query-builder";
 import {ProductFilterDto} from "../../common/dto/product-filter.dto";
 import {BaseQueryDto} from "../../common/dto/query.dto";
 import {RoleEnum} from "@prisma/client";
+import {ScrapedProduct} from "../../scraper/schemas";
 
 @Injectable()
 
 export class RestProductService {
     constructor( @InjectModel(UnitedCategories.name) private unitedCategories:Model<UnitedCategories>,
-                 @InjectModel(UnitedProducts.name) private unitedProducts:Model<UnitedProducts>) {
+                 @InjectModel(UnitedProducts.name) private unitedProducts:Model<UnitedProducts>,
+                 @InjectModel(ScrapedProduct.name) private scrapedProduct: Model<ScrapedProduct>)
+{
     }
 
     async getAllUnitedCategories(){
@@ -19,12 +22,13 @@ export class RestProductService {
     }
 
     async getAllUnitedProducts(queryDto: any) {
-        const { search, category, country } = queryDto;
+        // 1. Добавляем brand в деструктуризацию
+        const { search, category, country, brand } = queryDto;
 
         let searchProductIds: any[] | null = null;
         let foundCategoryIds: any[] | null = null;
 
-        // Atlas search by prods
+        // --- Atlas Search: Поиск товаров по тексту ---
         if (search) {
             const searchResults = await this.unitedProducts.aggregate([
                 {
@@ -41,16 +45,13 @@ export class RestProductService {
             ]);
             searchProductIds = searchResults.map(r => r._id);
 
-
             if (searchProductIds.length === 0) {
                 return { data: [], totalItems: 0, totalPages: 0, page: 1 };
             }
         }
 
-        // search with atlas search by prods
+        // --- Atlas Search: Поиск категорий ---
         if (category) {
-
-
             const categoryResults = await this.unitedCategories.aggregate([
                 {
                     $search: {
@@ -72,35 +73,66 @@ export class RestProductService {
             }
         }
 
-
+        // --- Сборка основного фильтра ---
         const baseFilter: any = {};
-
 
         if (searchProductIds) {
             baseFilter._id = { $in: searchProductIds };
         }
 
-
-
         if (foundCategoryIds) {
             baseFilter.unitedCategory = { $in: foundCategoryIds };
         }
 
-        // Фильтр по стране
-        if (country) {
-            baseFilter["sources.productInfo.Країна"] = country;
+        // --- 2. ЛОГИКА БРЕНДА (Новое) ---
+        if (brand) {
+            baseFilter.brand = brand;
         }
 
-        // --- 4. Запрос и Пагинация
+        // --- 3. ЛОГИКА СТРАНЫ (Исправлено) ---
+        if (country) {
+            // Мы не можем фильтровать "sources.productInfo" напрямую в UnitedProducts,
+            // так как sources - это массив ID (ссылок).
+            // Сначала ищем ID источников, которые относятся к этой стране:
+            const sourcesInCountry = await this.scrapedProduct
+                .find({ "productInfo.Країна": country })
+                .select('_id');
+
+            const sourceIds = sourcesInCountry.map(s => s._id);
+
+            if (sourceIds.length === 0) {
+                // Если в этой стране нет источников -> возвращаем пустоту
+                return { data: [], totalItems: 0, totalPages: 0, page: 1 };
+            }
+
+            // Ищем товары, у которых есть хотя бы один источник из списка sourceIds
+            baseFilter.sources = { $in: sourceIds };
+        }
+
+        // --- 4. Запрос и Пагинация ---
         const totalItems = await this.unitedProducts.countDocuments(baseFilter);
 
         const query = this.unitedProducts
             .find(baseFilter)
             .populate("unitedCategory sources");
 
+        // Очистка DTO для QueryBuilder
         const builderDto = { ...queryDto };
         delete builderDto.search;
         delete builderDto.category;
+        delete builderDto.brand;
+        delete builderDto.country;
+
+        if (queryDto.sort === 'cheap') {
+            builderDto.sort = 'minPrice';
+        } else if (queryDto.sort === 'expensive') {
+            builderDto.sort = '-minPrice';
+        } else {
+            builderDto.sort = '-createdAt';
+        }
+
+        if (builderDto.page) builderDto.page = Number(builderDto.page);
+        if (builderDto.limit) builderDto.limit = Number(builderDto.limit);
 
         const products = await new QueryBuilder(builderDto, query)
             .filter()
@@ -108,63 +140,16 @@ export class RestProductService {
             .pagination()
             .build();
 
-        const limit = queryDto.limit || 50;
+        const limit = Number(queryDto.limit || 50);
         const totalPages = Math.ceil(totalItems / limit);
 
         return {
             data: products,
             totalItems,
             totalPages,
-            page: queryDto.page || 1
+            page: Number(queryDto.page || 1)
         };
     }
-
-    async getSearchedProducts(queryDto: any) {
-        const { search = '', limit = 50, page = 1 } = queryDto;
-        const skip = (page - 1) * limit;
-
-        const pipeline: any[] = [];
-        if (search) {
-            pipeline.push({
-                $search: {
-                    index: 'productsIndex',
-                    text: {
-                        query: search,
-                        path: ['name', 'brand', 'normalizedName', 'slug'],
-                        fuzzy: {
-                            maxEdits: 1
-                        }
-                    },
-                },
-            });
-        } else {
-            pipeline.push({ $sort: { createdAt: -1 } });
-        }
-
-
-        pipeline.push({
-            $facet: {
-                metadata: [{ $count: 'total' }],
-                data: [{ $skip: skip }, { $limit: limit }],
-            },
-        });
-
-        const result = await this.unitedProducts.aggregate(pipeline);
-
-        const data = result[0].data;
-        const total = result[0].metadata.length > 0 ? result[0].metadata[0].total : 0;
-        const totalPages = Math.ceil(total / limit);
-
-        return {
-            data,
-            totalItems: total,
-            totalPages,
-            page,
-        };
-    }
-
-
-
 
     async getUnitedProductBySlug(slug:string){
         console.log(slug);
@@ -187,6 +172,20 @@ export class RestProductService {
         }
 
         return unitedProd;
+    }
+
+    async getUniqueBrands(){
+        const brand = this.unitedProducts.distinct("brand");
+        return brand.sort();
+    }
+
+    async getUniqueCountries() {
+
+        const countries = await this.scrapedProduct.distinct("productInfo.Країна");
+
+        return countries
+            .filter(country => country && country.trim() !== '')
+            .sort();
     }
 
     async deleteProductById(id:string){

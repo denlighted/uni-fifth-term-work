@@ -59,12 +59,30 @@
         <!-- Sidebar Filters -->
         <aside class="sidebar">
           <div class="additional-filters">
-            <select class="filter-select">
-              <option>Country of production</option>
+            <select v-model="selectedCountry" class="filter-select">
+              <option value="">All countries</option>
+
+              <option
+                  v-for="country in availableCountries"
+                  :key="country"
+                  :value="country"
+              >
+                {{ country }}
+              </option>
             </select>
-            <select class="filter-select">
-              <option>Trademark</option>
+
+            <select v-model="selectedBrand" class="filter-select">
+              <option value="">All Brands</option>
+
+              <option
+                  v-for="brand in availableBrands"
+                  :key="brand"
+                  :value="brand"
+              >
+                {{ brand }}
+              </option>
             </select>
+
           </div>
         </aside>
 
@@ -76,6 +94,7 @@
                 v-model="sortOrder"
                 class="sort-select"
             >
+              <option value="">Default</option>
               <option value="cheap">From cheap to expensive</option>
               <option value="expensive">From expensive to cheap</option>
             </select>
@@ -172,22 +191,27 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted, watch} from 'vue'
+import {ref, onMounted, watch} from 'vue'
 import {Search, MapPin, ShoppingCart, Star} from 'lucide-vue-next'
 import {getAllUnitedProducts} from "@/api/pages/main-page-all-products.ts";
 import router from "@/router/index.ts";
 import {getUserProfile} from "@/api/profiles/user-profile.ts";
-import {useRoute, useRouter} from "vue-router";
-import {isCart} from "@/api/pages/isCart.js";
-import {isFav} from "@/api/pages/isFav.js";
+import {useRoute} from "vue-router";
 import {deleteOrAddToFavorite} from "@/api/pages/delete-favorite.js";
 import {deleteOrAddToCart} from "@/api/pages/delete-from-cart.js";
-
-const products = ref([]);
-const currentImageIndex = ref({});
-const sortOrder = ref('cheap')
+import {getProductsBrands} from "@/api/products/get-products-brands.js";
+import {getUniqueCountries} from "@/api/products/get-products-country.js";
 
 const route = useRoute();
+const products = ref([]);
+const currentImageIndex = ref({});
+const sortOrder = ref(route.query.sort || '');
+
+const availableBrands = ref([]);
+const selectedBrand = ref(route.query.brand || '');
+
+const availableCountries = ref([])
+const selectedCountry = ref(route.query.country || '')
 
 
 const user = ref(null)
@@ -195,10 +219,7 @@ const user = ref(null)
 const currentPage = ref(Number(route.query.page) || 1);
 const totalPages = ref(1);
 const searchQuery = ref(route.query.search || '');
-const searchCategory = ref(route.query.search || '')
-
-let isCarted = ref(false);
-let isFavorite = ref(false);
+const searchCategory = ref(route.query.category || '')
 
 const selectedCity = ref('Kyiv')
 
@@ -232,6 +253,24 @@ watch(searchCategory, () => {
   }, 500);
 });
 
+watch(selectedBrand, () => {
+  currentPage.value = 1;
+  updateUrlPage();
+  loadProducts();
+});
+
+watch(selectedCountry, () => {
+  currentPage.value = 1;
+  updateUrlPage();
+  loadProducts();
+});
+
+watch(sortOrder, () => {
+  currentPage.value = 1;
+  updateUrlPage();
+  loadProducts();
+});
+
 
 function nextImage(productId) {
   const p = products.value.find(p => p._id === productId);
@@ -249,11 +288,37 @@ function goToImage(productId, index) {
   currentImageIndex.value[productId] = index;
 }
 
+async function loadBrandsList() {
+  try {
+    const response = await getProductsBrands();
+    availableBrands.value = response.data;
+  } catch (error) {
+    console.error("Error loading brands:", error);
+  }
+}
+
+async function loadCountriesList() {
+  try {
+    const response = await getUniqueCountries();
+    availableCountries.value = response.data;
+  } catch (error) {
+    console.error("Error loading brands:", error);
+  }
+}
+
 async function loadProducts() {
   try {
 
 
-    const response = await getAllUnitedProducts({ page: currentPage.value, search:searchQuery.value, category:searchCategory.value });
+    const response = await getAllUnitedProducts(
+        {
+          page: currentPage.value,
+          search:searchQuery.value,
+          category:searchCategory.value,
+          brand: selectedBrand.value || undefined,
+          country:selectedCountry.value || undefined,
+          sort: sortOrder.value || undefined
+        });
 
     const items = response.data.data;
 
@@ -282,28 +347,11 @@ function updateUrlPage() {
       page: currentPage.value,
       search: searchQuery.value || undefined,
       category: searchCategory.value || undefined,
+      brand: selectedBrand.value || undefined,
+      country: selectedCountry.value || undefined,
+      sort: sortOrder.value || undefined
     },
   });
-}
-
-async function getIsCarted(productId){
-  try{
-    const response = await isCart(productId);
-    isCarted.value = response;
-  }
-  catch (error){
-    console.error(error)
-  }
-}
-
-async function getIsFavorite(productId){
-  try{
-    const response = await isFav(productId);
-    isFavorite.value = response;
-  }
-  catch (error){
-    console.error(error)
-  }
 }
 
 function goToProduct(slug) {
@@ -353,6 +401,8 @@ async function toggleFavorite(productId) {
 onMounted(async () => {
   await  loadProducts();
   await  getUser()
+  await loadBrandsList()
+  await loadCountriesList()
 });
 
 
