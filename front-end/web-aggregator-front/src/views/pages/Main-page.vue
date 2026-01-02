@@ -411,9 +411,10 @@ const scrollToTop = () => {
 
 onMounted(async () => {
   await  loadProducts();
-  await  getUser()
   await loadBrandsList()
   await loadCountriesList()
+  await  getUser()
+
 });
 
 

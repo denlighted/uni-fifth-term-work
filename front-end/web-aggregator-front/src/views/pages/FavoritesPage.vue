@@ -70,7 +70,7 @@
                 :key="product.id"
                 class="favorite-card"
             >
-              <div class="product-image">
+              <div class="product-image" @click="goToProduct(product.slug)">
                 <button class="nav-btn left" @click="prevImage(product.id)">&lt;</button>
                 <transition name="fade" mode="out-in">
                   <img
@@ -161,7 +161,8 @@ async function loadFavorites(){
         images: fav.unitedProduct.sources.map(s => s.imageLink),
         minPrice: fav.unitedProduct.minPrice,
         maxPrice: fav.unitedProduct.maxPrice,
-        unitedProduct: fav.unitedProduct
+        unitedProduct: fav.unitedProduct,
+        slug: fav.unitedProduct.slug
       }
     });
 
@@ -197,6 +198,10 @@ function prevImage(productId) {
 
 function goToImage(productId, index) {
   currentImageIndex.value[productId] = index;
+}
+
+function goToProduct(slug) {
+  router.push(`/products/profile/${slug}`);
 }
 
 const favoriteProducts = computed(() => favorites.value)
@@ -534,6 +539,7 @@ const handleLogout = async () => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  cursor: pointer
 }
 
 .product-image .image {
@@ -551,6 +557,7 @@ const handleLogout = async () => {
   padding: 12px; /* чуть меньше, чем было 16px */
   text-align: center;
   overflow: hidden;
+  cursor: pointer
 }
 
 .product-name {

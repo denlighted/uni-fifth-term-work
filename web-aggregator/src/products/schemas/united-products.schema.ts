@@ -51,9 +51,9 @@
         unitedCategory : UnitedCategories | Types.ObjectId;
 
         @Prop({
-            type: [{ type: Types.ObjectId, ref: ScrapedProduct.name }]  // Массив с ссылками на документы ScrapedProduct
+            type: [{ type: Types.ObjectId, ref: ScrapedProduct.name }]
         })
-        sources: ScrapedProduct[] | Types.ObjectId[];  // Ссылаемся на коллекцию ScrapedProduct
+        sources: ScrapedProduct[] | Types.ObjectId[];
 
     }
 

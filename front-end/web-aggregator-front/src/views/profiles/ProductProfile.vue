@@ -356,8 +356,9 @@ const selectedCity = ref('Kyiv')
 onMounted(async () => {
   await getProduct();
   await getReviews();
-  await getUsersStoresLocation()
   await getUser()
+  await getUsersStoresLocation()
+
 
   if (!user.value) {
     return;
@@ -470,6 +471,7 @@ async function addComment() {
     commentText.value = '';
     userRating.value = 0;
     notification.show("Success, review has been added", 'success');
+    await getProduct();
   } catch (error) {
     console.error('Error, trying create review', error);
     if (error.response && error.response.status === 401) {
